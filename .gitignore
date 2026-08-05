@@ -14,3 +14,10 @@ debug_output/
 data/test_videos/*
 !data/test_videos/.gitkeep
 !data/test_videos/README.md
+
+# Testing & Coverage
+.coverage
+.coverage.*
+.pytest_cache/
+.ruff_cache/
+

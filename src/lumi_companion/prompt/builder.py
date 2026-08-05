@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from lumi_companion.audio.srt_exporter import SRTExporter
+from lumi_companion.audio.srt_exporter import SubtitleExporter
 from lumi_companion.config import settings
 from lumi_companion.models.audio import SubtitleSegment
 
@@ -44,8 +44,9 @@ class PromptBuilder:
 
         lines: list[str] = []
         for seg in segments:
-            ts = SRTExporter.format_timestamp(seg.start)
+            ts = SubtitleExporter.format_timestamp(seg.start)
             lines.append(f"[{ts}] 発言: {seg.text}")
+
         return "\n".join(lines)
 
     @classmethod

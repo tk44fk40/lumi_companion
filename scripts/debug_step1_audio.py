@@ -13,7 +13,7 @@ from pathlib import Path
 # lumi_companion モジュールのパスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from lumi_companion.audio.srt_exporter import SRTExporter
+from lumi_companion.audio.srt_exporter import SubtitleExporter
 from lumi_companion.core.app import LumiApp
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
@@ -46,15 +46,18 @@ async def main() -> None:
     # 成果物の保存
     json_path = context.get_output_path("subtitles.json")
     srt_path = context.get_output_path("subtitles.srt")
+    vtt_path = context.get_output_path("subtitles.vtt")
 
-    SRTExporter.save_json(result.segments, json_path)
-    SRTExporter.save_srt(result.segments, srt_path)
+    SubtitleExporter.save_subtitles(result.segments, json_path)
+    SubtitleExporter.save_subtitles(result.segments, srt_path)
+    SubtitleExporter.save_subtitles(result.segments, vtt_path)
 
     logger.info("JSON 出力先: %s", json_path.resolve())
     logger.info("SRT 出力先:  %s", srt_path.resolve())
+    logger.info("VTT 出力先:  %s", vtt_path.resolve())
     print(f"\n--- 抽出された発言字幕一覧 (全 {len(result.segments)} 件) ---")
     for seg in result.segments:
-        ts = SRTExporter.format_timestamp(seg.start)
+        ts = SubtitleExporter.format_timestamp(seg.start)
         print(f"[{ts}] {seg.text}")
 
 

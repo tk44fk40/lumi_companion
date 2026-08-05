@@ -1,7 +1,7 @@
 """字幕エクスポートモジュール。
 
 本モジュールは、抽出された発言字幕データモデル (SubtitleSegment) の定義、
-および字幕データの JSON ファイル / 標準 SRT フォーマットファイルへの書き出し処理を提供します。
+および字幕データの JSON / SRT / WebVTT フォーマットファイルへの書き出し処理を提供します。
 """
 
 import json
@@ -14,8 +14,8 @@ import srt
 from lumi_companion.models.audio import SubtitleSegment
 
 
-class SRTExporter:
-    """字幕 JSON および SRT ファイルのエクスポートクラス。"""
+class SubtitleExporter:
+    """字幕 JSON, SRT および WebVTT ファイルのエクスポートクラス。"""
 
     @staticmethod
     def format_timestamp(seconds: float) -> str:
@@ -34,6 +34,24 @@ class SRTExporter:
         secs = total_seconds % 60
         millis = int((seconds - int(seconds)) * 1000)
         return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+    @staticmethod
+    def format_vtt_timestamp(seconds: float) -> str:
+        """秒数を WebVTT 形式のタイムスタンプ文字列 (HH:MM:SS.mmm) に変換します。
+
+        Args:
+            seconds (float): 変換対象の秒数。
+
+        Returns:
+            str: 形式化されたタイムスタンプ文字列。
+        """
+        td = timedelta(seconds=seconds)
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        secs = total_seconds % 60
+        millis = int((seconds - int(seconds)) * 1000)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
 
     @classmethod
     def save_json(cls, segments: Sequence[SubtitleSegment], output_path: Path) -> None:
@@ -71,3 +89,64 @@ class SRTExporter:
         formatted_srt = srt.compose(srt_items)
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(formatted_srt)
+
+    @classmethod
+    def save_vtt(cls, segments: Sequence[SubtitleSegment], output_path: Path) -> None:
+        """字幕セグメントリストを WebVTT (.vtt) 字幕ファイルとして保存します。
+
+        Args:
+            segments (Sequence[SubtitleSegment]): 字幕セグメントのリスト。
+            output_path (Path): 保存先 VTT パス。
+        """
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        lines = ["WEBVTT\n"]
+        for index, seg in enumerate(segments, start=1):
+            start_ts = cls.format_vtt_timestamp(seg.start)
+            end_ts = cls.format_vtt_timestamp(seg.end)
+            lines.append(f"{index}\n{start_ts} --> {end_ts}\n{seg.text}\n")
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+
+    @classmethod
+    def save_subtitles(
+        cls,
+        segments: Sequence[SubtitleSegment],
+        output_path: Path,
+        fmt: str | None = None,
+    ) -> None:
+        """字幕セグメントリストを指定フォーマットまたは拡張子自動判定でファイルとして保存します。
+
+        Args:
+            segments (Sequence[SubtitleSegment]): 字幕セグメントのリスト。
+            output_path (Path): 保存先ファイルパス。
+            fmt (str | None): 明示的なフォーマット指定 ("srt", "vtt", "json")。省略時は拡張子から判定。
+
+        Raises:
+            ValueError: サポートされていないフォーマットまたは拡張子の場合。
+        """
+        if fmt is None:
+            ext = output_path.suffix.lower()
+            if ext == ".vtt":
+                target_fmt = "vtt"
+            elif ext == ".srt":
+                target_fmt = "srt"
+            elif ext == ".json":
+                target_fmt = "json"
+            else:
+                msg = f"未対応の拡張子です: '{ext}' (対応拡張子: .srt, .vtt, .json)"
+                raise ValueError(msg)
+        else:
+            target_fmt = fmt.lower()
+
+        if target_fmt == "vtt":
+            cls.save_vtt(segments, output_path)
+        elif target_fmt == "srt":
+            cls.save_srt(segments, output_path)
+        elif target_fmt == "json":
+            cls.save_json(segments, output_path)
+        else:
+            msg = (
+                f"未対応のフォーマットです: '{fmt}' (対応フォーマット: srt, vtt, json)"
+            )
+            raise ValueError(msg)

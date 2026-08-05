@@ -49,25 +49,42 @@
 
 ## 4. モジュール別未カバー（モック化）箇所と技術的根拠
 
-### Audio モジュール (`src/lumi_companion/audio/processor.py`)
-- **未カバー処理**: `WhisperModel(...)` インスタンス化、`model.transcribe()` 内部処理
+### モジュール別最新カバレッジ一覧 (全 32 テスト通過 / 全体 77%)
+
+| モジュール (`src/lumi_companion/`) | カバレッジ | 主な状態・未カバー根拠 |
+| :--- | :---: | :--- |
+| **`audio/srt_exporter.py`** | **100%** | SRT / WebVTT / JSON 保存、拡張子自動判定、表記揺れ、例外処理を全網羅 |
+| **`prompt/builder.py`** | **100%** | システムプロンプト、字幕文章化、画像添付、JSON保存を全網羅 |
+| **`core/logger.py`** | **92%** | コンソール/ファイルハンドラー設定・再利用を網羅。未カバー: OSError ガード(L53-55) |
+| **`services/`** (全サービス) | **88%〜100%** | Protocol DI 経由のビジネスロジックを完全テスト |
+| **`models/`** (全データモデル) | **94%〜100%** | Pydantic/dataclass の構造変換を全テスト |
+| **`audio/processor.py`** | **56%** | 未カバー: Silero VAD / Faster-Whisper 重モデル初期化・推論 (L46-57, L75-100) ➔ 理由 1, 3 適用 |
+| **`vision/extractor.py`** | **39%** | 未カバー: OpenCV 動画ヘッダー読込・実デコード (L48-86, L107-112) ➔ 理由 1, 3 適用 |
+| **`llm/ollama.py`** | **15%** | 未カバー: 実際の Ollama サーバー（`localhost:11434`）HTTP 通信 (L38-60, L71-125) ➔ 理由 2 適用 |
+
+---
+
+### 未カバー箇所の詳細と技術的根拠
+
+#### Audio モジュール (`src/lumi_companion/audio/processor.py`)
+- **未カバー処理**: `WhisperModel(...)` インスタンス化、`model.transcribe()` 内部処理 (L46-57, L75-100, L111)
 - **未カバーとする根拠**:
   - `faster_whisper` (C++/CUDAバインディング) 内部の重いVAD・文字起こしロジックはライブラリ側の領域であり、アプリ単体テストでのテストは不要。
   - 数GBのモデルダウンロードや GPU (CUDA) 依存を排除し、CI/CD や軽量環境で高速動作させるため。
 
-### Vision モジュール (`src/lumi_companion/vision/extractor.py`)
-- **未カバー処理**: `cv2.VideoCapture` による動画ファイルヘッダー読込およびデコード
+#### Vision モジュール (`src/lumi_companion/vision/extractor.py`)
+- **未カバー処理**: `cv2.VideoCapture` による動画ファイルヘッダー読込およびデコード (L48-86, L107-112, L133-136)
 - **未カバーとする根拠**:
   - OpenCV (C言語バイナリ) や Pillow の画像デコード・アスペクト比リサイズ自体の動作保証はライブラリ側の領域。
   - 返却データ型（幅・高さ・Base64）の変換ロジックはモックテストで検証完了済み。
 
-### LLM モジュール (`src/lumi_companion/llm/ollama.py`)
-- **未カバー処理**: `httpx.AsyncClient` による実際の Ollama サーバー（`localhost:11434`）への生 HTTP リクエスト
+#### LLM モジュール (`src/lumi_companion/llm/ollama.py`)
+- **未カバー処理**: `httpx.AsyncClient` による実際の Ollama サーバー（`localhost:11434`）への生 HTTP リクエスト (L38-60, L71-125, L135-143, L158-183)
 - **未カバーとする根拠**:
   - 単体テスト実行時に `ollama serve` プロセスが未起動の環境（CI環境等）でも確実にテストをパスさせるため。
   - 通信エラー (`ConnectionError`) 等の例外処理およびレスポンスモデル変換はモックテストで検証完了済み。
 
-### 抽象インターフェース (`src/lumi_companion/services/protocols.py`)
+#### 抽象インターフェース (`src/lumi_companion/services/protocols.py`)
 - **未カバー処理**: Protocol 型内の抽象メソッドシグネチャ体 (`...`)
 - **未カバーとする根拠**: 指針 6（抽象メソッドスタブ）に該当。具象サービス側で動作検証済み。
 
@@ -76,3 +93,4 @@
 ## 5. 今後のコード改修・リファクタリング時のメンテナビリティ指針
 - 新しいモジュール追加や外部依存の変更を行った際は、本ドキュメントの未カバー根拠を同時に更新・メンテすること。
 - 新たな異常系処理を追加した場合は、対応するテストケースを `tests/` に追加し、堅牢性を維持すること。
+

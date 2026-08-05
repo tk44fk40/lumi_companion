@@ -58,5 +58,6 @@ asyncio_mode = "auto"
 dev = [
     "basedpyright>=1.39.9",
     "pre-commit>=4.6.1",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.1",
 ]
