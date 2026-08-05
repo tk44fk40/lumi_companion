@@ -1,6 +1,6 @@
 ---
 name: autonomous-code-workflow
-description: lumi_companion の開発ルール (coding_rules.md) に完全準拠し、簡潔な指示から Issue/ブランチ準備・シグネチャ合意・TDD・自動検証・セルフチェック・PR作成・スカッシュマージまでを自律完遂する実装スキル
+description: lumi_companion の開発ルール (.agents/AGENTS.md) に完全準拠し、簡潔な指示から Issue/ブランチ準備・シグネチャ合意・TDD・自動検証・セルフチェック・PR作成・スカッシュマージまでを自律完遂する実装スキル
 ---
 
 # 自律的コード実装 ＆ 品質保証ワークフロー (`autonomous-code-workflow`)
@@ -25,7 +25,7 @@ description: lumi_companion の開発ルール (coding_rules.md) に完全準拠
 - `uv run pytest -v --no-header <対象テスト>` を実行し、未実装で失敗することをエビデンス表示。
 
 ### Step 3: アトミック（小単位）実装
-- `coding_rules.md` 準拠（1 ファイル最大 300 行以下）。小単位で実装コードを作成。
+- `AGENTS.md` 準拠（1 ファイル最大 300 行以下）。小単位で実装コードを作成。
 
 ### Step 4: ローカル自動コマンド検証
 ユーザーへ提示前に以下の検証を実行し、エラー 0 件を実証：
