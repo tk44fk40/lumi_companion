@@ -10,15 +10,8 @@ from datetime import timedelta
 from pathlib import Path
 
 import srt
-from pydantic import BaseModel
 
-
-class SubtitleSegment(BaseModel):
-    """字幕セグメントデータモデル。"""
-
-    start: float  # 開始秒 (例: 1.5)
-    end: float  # 終了秒 (例: 4.2)
-    text: str  # 発言テキスト
+from lumi_companion.models.audio import SubtitleSegment
 
 
 class SRTExporter:
@@ -51,7 +44,7 @@ class SRTExporter:
             output_path (Path): 保存先 JSON パス。
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        data = [segment.model_dump() for segment in segments]
+        data = [segment.to_dict() for segment in segments]
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 

@@ -10,8 +10,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from lumi_companion.audio.srt_exporter import SRTExporter, SubtitleSegment
+from lumi_companion.audio.srt_exporter import SRTExporter
 from lumi_companion.config import settings
+from lumi_companion.models.audio import SubtitleSegment
 
 logger = logging.getLogger(__name__)
 

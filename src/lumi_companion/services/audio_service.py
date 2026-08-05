@@ -7,12 +7,10 @@
 import asyncio
 from pathlib import Path
 
-from faster_whisper import WhisperModel
-
-from lumi_companion.config import settings
+from lumi_companion.audio.processor import AudioProcessor
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
-from lumi_companion.models.audio import AudioProcessResult, SubtitleSegment
+from lumi_companion.models.audio import AudioProcessResult
 
 logger = LumiLogger.get_logger(__name__)
 
@@ -20,31 +18,19 @@ logger = LumiLogger.get_logger(__name__)
 class AudioProcessorService:
     """音声解析および発言字幕抽出サービス。"""
 
-    def __init__(self, context: AppContext | None = None) -> None:
+    def __init__(
+        self,
+        context: AppContext | None = None,
+        processor: AudioProcessor | None = None,
+    ) -> None:
         """サービスの初期化を行います。
 
         Args:
             context (AppContext | None, optional): 設定コンテキスト。
+            processor (AudioProcessor | None, optional): 音声認識プロセッサ。
         """
         self.context = context or AppContext()
-        self._model: WhisperModel | None = None
-
-    def _get_model(self) -> WhisperModel:
-        """Faster-Whisper モデルを遅延読み込みで取得します。
-
-        Returns:
-            WhisperModel: ロードされた Whisper モデル。
-        """
-        if self._model is None:
-            logger.info(
-                "Whisperモデル (%s) を読み込み中...", settings.whisper_model_size
-            )
-            self._model = WhisperModel(
-                model_size_or_path=settings.whisper_model_size,
-                device=settings.whisper_device,
-                compute_type=settings.whisper_compute_type,
-            )
-        return self._model
+        self.processor = processor or AudioProcessor()
 
     def process_audio_sync(self, video_path: Path | str) -> AudioProcessResult:
         """同期処理で音声トラックから発言区間を抽出し文字起こしを行います。
@@ -58,35 +44,13 @@ class AudioProcessorService:
         Raises:
             FileNotFoundError: 入力動画ファイルが存在しない場合。
         """
-        path = Path(video_path)
-        if not path.exists():
-            raise FileNotFoundError(f"動画ファイルが存在しません: {path}")
+        segments = self.processor.process_sync(video_path)
+        # 最終セグメントの終了時刻または0.0を全体の概算秒数とする
+        duration = segments[-1].end if segments else 0.0
 
-        model = self._get_model()
-        logger.info("音声認識処理を開始します: %s", path)
-
-        segments_raw, info = model.transcribe(
-            str(path),
-            vad_filter=True,
-            vad_parameters={"min_silence_duration_ms": 500},
-        )
-
-        segments: list[SubtitleSegment] = []
-        for seg in segments_raw:
-            cleaned_text = seg.text.strip()
-            if cleaned_text:
-                segments.append(
-                    SubtitleSegment(
-                        start=seg.start,
-                        end=seg.end,
-                        text=cleaned_text,
-                    )
-                )
-
-        logger.info("発言抽出完了 (計 %d 件)", len(segments))
         return AudioProcessResult(
             segments=segments,
-            duration_seconds=float(info.duration),
+            duration_seconds=duration,
         )
 
     async def process_audio_async(self, video_path: Path | str) -> AudioProcessResult:

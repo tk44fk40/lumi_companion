@@ -5,16 +5,12 @@
 """
 
 import asyncio
-import base64
-from io import BytesIO
 from pathlib import Path
-
-import cv2
-from PIL import Image
 
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
 from lumi_companion.models.vision import FrameExtractResult
+from lumi_companion.vision.extractor import FrameExtractor
 
 logger = LumiLogger.get_logger(__name__)
 
@@ -46,51 +42,25 @@ class VisionExtractorService:
             FileNotFoundError: 入力動画ファイルが存在しない場合。
             ValueError: フレーム読み込みに失敗した場合。
         """
-        path = Path(video_path)
-        if not path.exists():
-            raise FileNotFoundError(f"動画ファイルが存在しません: {path}")
+        image = FrameExtractor.extract_frame_pil(
+            video_path=video_path,
+            timestamp_seconds=timestamp_seconds,
+            max_width=self.context.max_image_width_px,
+        )
+        b64_str = FrameExtractor.extract_frame_base64(
+            video_path=video_path,
+            timestamp_seconds=timestamp_seconds,
+            max_width=self.context.max_image_width_px,
+            quality=self.context.jpeg_quality,
+        )
 
-        cap = cv2.VideoCapture(str(path))
-        if not cap.isOpened():
-            raise ValueError(f"動画ファイルを開けませんでした: {path}")
-
-        try:
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            if fps <= 0:
-                fps = 30.0
-
-            target_frame = int(timestamp_seconds * fps)
-            cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
-
-            ret, frame = cap.read()
-            if not ret or frame is None:
-                raise ValueError(
-                    f"タイムスタンプ {timestamp_seconds}秒の読み込みに失敗しました。"
-                )
-
-            # RGB 変換とリサイズ
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(frame_rgb)
-
-            max_width = self.context.max_image_width_px
-            if image.width > max_width:
-                new_height = int(image.height * (max_width / image.width))
-                image = image.resize((max_width, new_height), Image.Resampling.LANCZOS)
-
-            # JPEG エンコードおよび Base64 化
-            buffer = BytesIO()
-            image.save(buffer, format="JPEG", quality=self.context.jpeg_quality)
-            b64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-            logger.info("フレーム抽出成功 (%dx%d)", image.width, image.height)
-            return FrameExtractResult(
-                timestamp_seconds=timestamp_seconds,
-                width=image.width,
-                height=image.height,
-                image_base64=b64_str,
-            )
-        finally:
-            cap.release()
+        logger.info("フレーム抽出成功 (%dx%d)", image.width, image.height)
+        return FrameExtractResult(
+            timestamp_seconds=timestamp_seconds,
+            width=image.width,
+            height=image.height,
+            image_base64=b64_str,
+        )
 
     async def extract_frame_async(
         self, video_path: Path | str, timestamp_seconds: float
