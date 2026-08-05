@@ -1,7 +1,62 @@
 [project]
 name = "lumi-companion"
 version = "0.1.0"
-description = "Add your description here"
+description = "Live Understanding & Multimodal Interactivity Companion"
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = []
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "faster-whisper>=1.0.0",
+    "httpx>=0.27.0",
+    "onnxruntime>=1.17.0",
+    "opencv-python>=4.9.0",
+    "pillow>=10.0.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "srt>=3.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lumi_companion"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.basedpyright]
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.39.9",
+    "pre-commit>=4.6.1",
+    "ruff>=0.16.1",
+]

@@ -1,4 +1,11 @@
-def main():
+"""lumi_companion エントリーポイントモジュール。
+
+アプリケーションのメイン起動エントリーポイントを提供します。
+"""
+
+
+def main() -> None:
+    """アプリケーションのメインエントリーポイント関数です。"""
     print("Hello from lumi-companion!")
 
 
