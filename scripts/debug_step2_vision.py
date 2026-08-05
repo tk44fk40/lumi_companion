@@ -51,7 +51,10 @@ async def main() -> None:
     # 画像ファイルの保存
     out_image_path = context.get_output_path("extracted_frame.jpg")
     FrameExtractor.save_extracted_frame(
-        video_path, args.timestamp, out_image_path, context.max_image_width_px
+        video_path,
+        args.timestamp,
+        out_image_path,
+        max_height=context.max_image_height_px,
     )
 
     logger.info("画像出力先: %s", out_image_path.resolve())

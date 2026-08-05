@@ -23,7 +23,7 @@ async def test_vision_extractor_service_extract_frame_async(
     """VisionExtractorService が FrameExtractor 経由で非同期にフレーム抽出結果を返却することを検証します。"""
     # Arrange (準備)
     service = VisionExtractorService(mock_context)
-    dummy_image = Image.new("RGB", (640, 360))
+    dummy_image = Image.new("RGB", (854, 480))
 
     with (
         patch(
@@ -40,18 +40,18 @@ async def test_vision_extractor_service_extract_frame_async(
 
         # Assert (検証)
         assert result.timestamp_seconds == 10.0
-        assert result.width == 640
-        assert result.height == 360
+        assert result.width == 854
+        assert result.height == 480
         assert result.image_base64 == "bW9ja19iYXNlNjQ="
         mock_pil.assert_called_once_with(
             video_path="dummy_video.mp4",
             timestamp_seconds=10.0,
-            max_width=mock_context.max_image_width_px,
+            max_height=mock_context.max_image_height_px,
         )
         mock_b64.assert_called_once_with(
             video_path="dummy_video.mp4",
             timestamp_seconds=10.0,
-            max_width=mock_context.max_image_width_px,
+            max_height=mock_context.max_image_height_px,
             quality=mock_context.jpeg_quality,
         )
 

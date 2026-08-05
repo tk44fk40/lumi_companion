@@ -45,12 +45,12 @@ class VisionExtractorService:
         image = FrameExtractor.extract_frame_pil(
             video_path=video_path,
             timestamp_seconds=timestamp_seconds,
-            max_width=self.context.max_image_width_px,
+            max_height=self.context.max_image_height_px,
         )
         b64_str = FrameExtractor.extract_frame_base64(
             video_path=video_path,
             timestamp_seconds=timestamp_seconds,
-            max_width=self.context.max_image_width_px,
+            max_height=self.context.max_image_height_px,
             quality=self.context.jpeg_quality,
         )
 

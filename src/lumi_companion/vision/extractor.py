@@ -25,14 +25,14 @@ class FrameExtractor:
         cls,
         video_path: Path | str,
         timestamp_seconds: float,
-        max_width: int = 640,
+        max_height: int = 480,
     ) -> Image.Image:
         """指定秒位置のフレームを取得し、アスペクト比を維持してリサイズした PIL Image を返却します。
 
         Args:
             video_path (Path | str): 入力動画ファイルパス。
             timestamp_seconds (float): 抽出対象のタイムスタンプ (秒)。
-            max_width (int, optional): 最大横幅 (px)。デフォルト 640。
+            max_height (int, optional): 最大高さ (px)。デフォルト 480。
 
         Returns:
             Image.Image: リサイズされた PIL Image オブジェクト。
@@ -67,11 +67,11 @@ class FrameExtractor:
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(frame_rgb)
 
-            # アスペクト比を保持したままリサイズ
+            # アスペクト比を保持したままリサイズ (高さ max_height 基準)
             width, height = image.size
-            if width > max_width:
-                new_height = int(height * (max_width / width))
-                image = image.resize((max_width, new_height), Image.Resampling.LANCZOS)
+            if height > max_height:
+                new_width = int(width * (max_height / height))
+                image = image.resize((new_width, max_height), Image.Resampling.LANCZOS)
 
             logger.info(
                 "フレーム抽出完了: %s秒位置 (元のサイズ: %dx%d -> リサイズ後: %dx%d)",
@@ -90,7 +90,7 @@ class FrameExtractor:
         cls,
         video_path: Path | str,
         timestamp_seconds: float,
-        max_width: int = 640,
+        max_height: int = 480,
         quality: int = 85,
     ) -> bytes:
         """抽出・リサイズしたフレームを JPEG バイト列として返却します。
@@ -98,14 +98,11 @@ class FrameExtractor:
         Args:
             video_path (Path | str): 入力動画ファイルパス。
             timestamp_seconds (float): 抽出対象のタイムスタンプ (秒)。
-            max_width (int, optional): 最大横幅 (px)。デフォルト 640。
+            max_height (int, optional): 最大高さ (px)。デフォルト 480。
             quality (int, optional): JPEG 圧縮クオリティ。デフォルト 85。
-
-        Returns:
-            bytes: JPEG フォーマットのバイトデータ。
         """
         image = cls.extract_frame_pil(
-            video_path, timestamp_seconds, max_width=max_width
+            video_path, timestamp_seconds, max_height=max_height
         )
         buffer = BytesIO()
         image.save(buffer, format="JPEG", quality=quality)
@@ -116,7 +113,7 @@ class FrameExtractor:
         cls,
         video_path: Path | str,
         timestamp_seconds: float,
-        max_width: int = 640,
+        max_height: int = 480,
         quality: int = 85,
     ) -> str:
         """抽出・リサイズしたフレームを Base64 エンコード文字列として返却します。
@@ -124,14 +121,11 @@ class FrameExtractor:
         Args:
             video_path (Path | str): 入力動画ファイルパス。
             timestamp_seconds (float): 抽出対象のタイムスタンプ (秒)。
-            max_width (int, optional): 最大横幅 (px)。デフォルト 640。
+            max_height (int, optional): 最大高さ (px)。デフォルト 480。
             quality (int, optional): JPEG 圧縮クオリティ。デフォルト 85。
-
-        Returns:
-            str: UTF-8 デコードされた Base64 文字列。
         """
         jpeg_bytes = cls.extract_frame_bytes(
-            video_path, timestamp_seconds, max_width=max_width, quality=quality
+            video_path, timestamp_seconds, max_height=max_height, quality=quality
         )
         return base64.b64encode(jpeg_bytes).decode("utf-8")
 
@@ -141,7 +135,7 @@ class FrameExtractor:
         video_path: Path | str,
         timestamp_seconds: float,
         output_path: Path | str,
-        max_width: int = 640,
+        max_height: int = 480,
     ) -> Path:
         """抽出・リサイズしたフレームを指定パスへ JPEG 画像として保存します。
 
@@ -149,7 +143,7 @@ class FrameExtractor:
             video_path (Path | str): 入力動画ファイルパス。
             timestamp_seconds (float): 抽出対象のタイムスタンプ (秒)。
             output_path (Path | str): 保存先画像パス。
-            max_width (int, optional): 最大横幅 (px)。デフォルト 640。
+            max_height (int, optional): 最大高さ (px)。デフォルト 480。
 
         Returns:
             Path: 保存された画像ファイルの絶対パス。
@@ -158,7 +152,7 @@ class FrameExtractor:
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         image = cls.extract_frame_pil(
-            video_path, timestamp_seconds, max_width=max_width
+            video_path, timestamp_seconds, max_height=max_height
         )
         image.save(out_path, format="JPEG", quality=90)
         logger.info("フレーム画像を保存しました: %s", out_path.resolve())
@@ -169,14 +163,14 @@ class FrameExtractor:
         cls,
         video_path: Path | str,
         timestamp_seconds: float,
-        max_width: int = 640,
+        max_height: int = 480,
     ) -> str:
         """非同期で Base64 フレーム文字列を取得します。
 
         Args:
             video_path (Path | str): 入力動画ファイルパス。
             timestamp_seconds (float): 抽出対象のタイムスタンプ (秒)。
-            max_width (int, optional): 最大横幅 (px)。デフォルト 640。
+            max_height (int, optional): 最大高さ (px)。デフォルト 480。
 
         Returns:
             str: Base64 エンコード文字列。
@@ -185,5 +179,5 @@ class FrameExtractor:
             cls.extract_frame_base64,
             video_path,
             timestamp_seconds,
-            max_width,
+            max_height,
         )

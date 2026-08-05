@@ -54,5 +54,6 @@ async def test_lumi_app_individual_steps(
     assert audio_res.segments[0].text == "テスト発言1"
 
     frame_res = await app.run_step2_vision("dummy.mp4", 5.0)
-    assert frame_res.width == 640
+    assert frame_res.height == 480
+    assert frame_res.width == 854
     assert frame_res.timestamp_seconds == 5.0

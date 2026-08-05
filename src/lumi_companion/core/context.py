@@ -22,8 +22,8 @@ class AppContext:
     ollama_model: str = field(default_factory=lambda: settings.ollama_model)
     ollama_num_ctx: int = field(default_factory=lambda: settings.ollama_num_ctx)
 
-    # 画像処理定数 (480p / 640pxアスペクト比維持)
-    max_image_width_px: int = 640
+    # 画像処理定数 (480p / 480px高さアスペクト比維持)
+    max_image_height_px: int = 480
     jpeg_quality: int = 85
 
     # タイムアウト定数 (秒)

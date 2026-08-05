@@ -52,8 +52,8 @@ class MockVisionService:
         """Mock のフレーム抽出結果を返却します。"""
         return FrameExtractResult(
             timestamp_seconds=timestamp_seconds,
-            width=640,
-            height=360,
+            width=854,
+            height=480,
             image_base64="dGVzdF9pbWFnZV9iYXNlNjQ=",
         )
 
