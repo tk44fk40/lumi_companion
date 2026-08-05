@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from lumi_companion.config import settings
 from lumi_companion.core.context import AppContext
 from lumi_companion.models.audio import SubtitleSegment
 from lumi_companion.services.audio_service import AudioProcessorService
@@ -15,6 +16,20 @@ def test_audio_processor_service_initialization(mock_context: AppContext) -> Non
     # Assert (検証)
     assert service.context == mock_context
     assert service.processor is not None
+
+
+def test_audio_processor_service_injects_settings_into_processor(
+    mock_context: AppContext,
+) -> None:
+    """AudioProcessorService が settings の設定値を AudioProcessor に注入 (DI) することを検証します。"""
+    # Arrange & Act (準備・実行)
+    service = AudioProcessorService(mock_context)
+
+    # Assert (検証)
+    assert service.processor.model_size == settings.whisper_model_size
+    assert service.processor.device == settings.whisper_device
+    assert service.processor.vad_threshold == settings.whisper_vad_threshold
+    assert service.processor.initial_prompt == settings.whisper_initial_prompt
 
 
 @pytest.mark.asyncio

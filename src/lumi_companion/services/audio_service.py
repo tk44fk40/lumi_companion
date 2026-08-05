@@ -8,6 +8,7 @@ import asyncio
 from pathlib import Path
 
 from lumi_companion.audio.processor import AudioProcessor
+from lumi_companion.config import settings
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
 from lumi_companion.models.audio import AudioProcessResult
@@ -30,7 +31,22 @@ class AudioProcessorService:
             processor (AudioProcessor | None, optional): 音声認識プロセッサ。
         """
         self.context = context or AppContext()
-        self.processor = processor or AudioProcessor()
+        if processor is not None:
+            self.processor = processor
+        else:
+            self.processor = AudioProcessor(
+                model_size=settings.whisper_model_size,
+                device=settings.whisper_device,
+                compute_type=settings.whisper_compute_type,
+                language=settings.whisper_language,
+                beam_size=settings.whisper_beam_size,
+                initial_prompt=settings.whisper_initial_prompt,
+                condition_on_previous_text=settings.whisper_condition_on_previous_text,
+                vad_filter=settings.whisper_vad_filter,
+                vad_threshold=settings.whisper_vad_threshold,
+                vad_min_silence_duration_ms=settings.whisper_vad_min_silence_duration_ms,
+                no_speech_threshold=settings.whisper_no_speech_threshold,
+            )
 
     def process_audio_sync(self, video_path: Path | str) -> AudioProcessResult:
         """同期処理で音声トラックから発言区間を抽出し文字起こしを行います。
