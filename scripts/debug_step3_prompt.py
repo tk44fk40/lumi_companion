@@ -52,13 +52,13 @@ async def main() -> None:
         "--model",
         type=str,
         default=settings.ollama_model,
-        help="Ollama モデル名 (デフォルト: qwen2-vl:2b)",
+        help="Ollama モデル名",
     )
     parser.add_argument(
         "--num-ctx",
         type=int,
         default=settings.ollama_num_ctx,
-        help="動的コンテキスト長 num_ctx (デフォルト: 4096)",
+        help="動的コンテキスト長 num_ctx",
     )
     parser.add_argument(
         "--timestamp",
@@ -66,24 +66,42 @@ async def main() -> None:
         default=10.0,
         help="画像フレーム抽出位置 (秒)",
     )
+    parser.add_argument(
+        "--lang",
+        type=str,
+        default="ja",
+        choices=["ja", "en"],
+        help="プロンプト言語 (ja または en)",
+    )
     args = parser.parse_args()
 
     output_dir: Path = args.output_dir
     subtitles_path: Path = args.subtitles_json
     video_path: Path = args.video
 
-    logger.info("=== Step 3: Ollama 投入用プロンプト JSON 構築処理開始 ===")
+    logger.info("=== Step 3: Ollama 投入用プロンプト JSON 構築処理開始 (言語: %s) ===", args.lang)
 
-    # 1. 字幕データのロード (ファイルがなければダミーサンプル生成)
+    # 1. 字幕データまたは英語テスト字幕のロード
     subtitles: list[SubtitleSegment] = []
-    if subtitles_path.exists():
+    if args.lang == "en":
+        logger.info("英語テスト用字幕を使用します。")
+        subtitles = [
+            SubtitleSegment(
+                start=1.0,
+                end=3.5,
+                text="Hello everyone! I am starting the live stream now!",
+            ),
+            SubtitleSegment(
+                start=4.0,
+                end=8.2,
+                text="I am going to challenge the boss battle. Can I win?",
+            ),
+        ]
+    elif subtitles_path.exists():
         logger.info("字幕 JSON をロード: %s", subtitles_path)
         subtitles = load_subtitles(subtitles_path)
     else:
-        logger.warning(
-            "字幕 JSON (%s) が無いため、ダミーのテスト字幕を生成します。",
-            subtitles_path,
-        )
+        logger.warning("字幕 JSON が無いため、デフォルトテスト字幕を使用します。")
         subtitles = [
             SubtitleSegment(
                 start=1.0,
@@ -97,7 +115,7 @@ async def main() -> None:
             ),
         ]
 
-    # 2. 画像フレームの Base64 エンコード取得 (動画があれば抽出、無ければダミー設定)
+    # 2. 画像フレームの抽出 Base64化
     image_base64: str | None = None
     if video_path.exists():
         logger.info(
@@ -108,19 +126,29 @@ async def main() -> None:
         image_base64 = await FrameExtractor.extract_frame_base64_async(
             video_path, args.timestamp
         )
-    else:
-        logger.warning(
-            "動画ファイル (%s) が無いため、画像なしテキストのみでペイロードを構築します。",
-            video_path,
-        )
 
-    # 3. Ollama ペイロードの構築
-    payload = PromptBuilder.build_payload(
-        image_base64=image_base64,
-        subtitles=subtitles,
-        model=args.model,
-        num_ctx=args.num_ctx,
-    )
+    # 3. ペイロード構築 (言語が en の場合は英語用メッセージを設定)
+    if args.lang == "en":
+        user_prompt = "Look at the stream screen and the streamer's comment, then reply with a short friendly chat comment in English (1 sentence)."
+        payload = PromptBuilder.build_payload(
+            image_base64=image_base64,
+            subtitles=subtitles,
+            user_prompt=user_prompt,
+            model=args.model,
+            num_ctx=args.num_ctx,
+        )
+        # システムプロンプトも英語に上書き
+        payload["messages"][0]["content"] = (
+            "You are Lumi, a friendly AI companion watching a video game stream. "
+            "Reply with a short, friendly chat comment (1 sentence) based on the stream screen and the streamer's comment."
+        )
+    else:
+        payload = PromptBuilder.build_payload(
+            image_base64=image_base64,
+            subtitles=subtitles,
+            model=args.model,
+            num_ctx=args.num_ctx,
+        )
 
     # 4. debug_output/ollama_payload.json に保存
     payload_file = output_dir / "ollama_payload.json"
@@ -129,16 +157,12 @@ async def main() -> None:
     logger.info("=== 出力完了 ===")
     logger.info("JSON 出力先: %s", payload_file.resolve())
     logger.info("指定モデル: %s", payload["model"])
-    logger.info("指定 num_ctx: %s", payload["options"]["num_ctx"])
 
     print("\n--- Ollama JSON ペイロードプレビュー (要約) ---")
     print(f"Model: {payload['model']}")
     print(f"Options: {payload['options']}")
-    print(
-        f"Messages Count: {len(payload['messages'])} (System prompt + User prompt)"
-    )
-    if image_base64:
-        print(f"Attached Images: 1 (Base64 length: {len(image_base64)} chars)")
+    print(f"Messages Count: {len(payload['messages'])}")
+    print(f"User Prompt:\n{payload['messages'][1]['content']}")
 
 
 if __name__ == "__main__":

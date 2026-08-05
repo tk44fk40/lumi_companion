@@ -27,7 +27,6 @@ class OllamaClient:
                     m.get("name", "") for m in data.get("models", [])
                 ]
 
-                # タグの比較 (例: qwen2-vl:2b, qwen2-vl:2b-latest, qwen2-vl:latest)
                 for name in installed_models:
                     if (
                         name == model_name
@@ -51,7 +50,6 @@ class OllamaClient:
         payload = {"name": model_name, "stream": True}
 
         try:
-            # モデルダウンロード用の長時間タイムアウト (30分)
             timeout = httpx.Timeout(1800.0, connect=10.0)
             async with (
                 httpx.AsyncClient(timeout=timeout) as client,
@@ -64,6 +62,12 @@ class OllamaClient:
                         continue
                     try:
                         status_data = json.loads(line)
+
+                        if "error" in status_data:
+                            err_msg = status_data["error"]
+                            logger.error("Ollama モデルプルエラー: %s", err_msg)
+                            raise RuntimeError(f"Ollama モデル '{model_name}' の取得失敗: {err_msg}")
+
                         status_msg = status_data.get("status", "")
                         completed = status_data.get("completed", 0)
                         total = status_data.get("total", 0)

@@ -12,9 +12,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Ollama 設定
+    # Ollama 設定 (Vision対応標準モデル: moondream, llava, llama3.2-vision 等)
     ollama_host: str = "http://localhost:11434"
-    ollama_model: str = "qwen2-vl:2b"
+    ollama_model: str = "moondream"
     ollama_num_ctx: int = 4096
 
     # Whisper / 音声設定
