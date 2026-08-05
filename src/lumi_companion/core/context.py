@@ -34,9 +34,7 @@ class AppContext:
     default_video_path: Path = field(
         default_factory=lambda: settings.default_video_path
     )
-    debug_output_dir: Path = field(
-        default_factory=lambda: settings.debug_output_dir
-    )
+    debug_output_dir: Path = field(default_factory=lambda: settings.debug_output_dir)
 
     # ログ出力パス
     log_file_path: Path = field(

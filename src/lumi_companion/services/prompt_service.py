@@ -35,9 +35,7 @@ class PromptBuilderService:
         """
         self.context = context or AppContext()
 
-    def format_subtitles_text(
-        self, subtitles: Sequence[SubtitleSegment]
-    ) -> str:
+    def format_subtitles_text(self, subtitles: Sequence[SubtitleSegment]) -> str:
         """字幕セグメントをタイムスタンプ付きの文脈テキストに変換します。
 
         Args:
@@ -84,12 +82,12 @@ class PromptBuilderService:
             or "現在の配信画面と配信者の発言を踏まえて、チャットへ一言リアクションコメントを返してください。"
         )
 
-        user_content = f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{instruction}"
+        user_content = (
+            f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{instruction}"
+        )
 
         images_list = [image_base64] if image_base64 else None
-        user_msg = ChatMessage(
-            role="user", content=user_content, images=images_list
-        )
+        user_msg = ChatMessage(role="user", content=user_content, images=images_list)
         sys_msg = ChatMessage(role="system", content=SYSTEM_PROMPT_RUMIPON)
 
         payload = OllamaPayload(

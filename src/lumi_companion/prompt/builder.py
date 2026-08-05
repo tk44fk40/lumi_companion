@@ -1,3 +1,9 @@
+"""プロンプト構築モジュール。
+
+本モジュールは、AI パートナー「るみぽん！」用のシステムプロンプト定義、
+音声字幕テキストのフォーマット、および Ollama API 互換ペイロード JSON の構築を行います。
+"""
+
 import json
 import logging
 from collections.abc import Sequence
@@ -20,13 +26,18 @@ SYSTEM_PROMPT_RUMIPON = """あなたはライブ配信をリアルタイムで�
 
 
 class PromptBuilder:
-    """Ollama Chat API 互換プロンプト JSON 構築クラス"""
+    """Ollama Chat API 互換プロンプト JSON 構築クラス。"""
 
     @classmethod
-    def format_subtitles_text(
-        cls, segments: Sequence[SubtitleSegment]
-    ) -> str:
-        """字幕セグメントリストをタイムスタンプ付きのテキスト文章に整形"""
+    def format_subtitles_text(cls, segments: Sequence[SubtitleSegment]) -> str:
+        """字幕セグメントリストをタイムスタンプ付きのテキスト文章に整形します。
+
+        Args:
+            segments (Sequence[SubtitleSegment]): 発言字幕セグメントのシーケンス。
+
+        Returns:
+            str: タイムスタンプ付きで整形された字幕テキスト。
+        """
         if not segments:
             return "(直近の発言はありません)"
 
@@ -47,7 +58,20 @@ class PromptBuilder:
         temperature: float = 0.7,
         stream: bool = False,
     ) -> dict[str, Any]:
-        """Ollama API (/api/chat) 送信用の JSON ペイロード辞書を構築"""
+        """Ollama API (/api/chat) 送信用の JSON ペイロード辞書を構築します。
+
+        Args:
+            image_base64 (str | None, optional): 添付画像の Base64 文字列。
+            subtitles (Sequence[SubtitleSegment] | None, optional): 字幕セグメント。
+            user_prompt (str | None, optional): カスタムユーザー指示テキスト。
+            model (str | None, optional): 対象モデル名。
+            num_ctx (int | None, optional): コンテキストウィンドウ長。
+            temperature (float, optional): 推論サンプリング温度。デフォルト 0.7。
+            stream (bool, optional): ストリーミングレスポンスフラグ。デフォルト False。
+
+        Returns:
+            dict[str, Any]: Ollama Chat API 仕様に適合した辞書データ。
+        """
         target_model = model or settings.ollama_model
         target_num_ctx = num_ctx or settings.ollama_num_ctx
 
@@ -57,7 +81,9 @@ class PromptBuilder:
             or "現在の配信画面と配信者の発言を踏まえて、チャットへ一言リアクションコメントを返してください。"
         )
 
-        user_content = f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{prompt_text}"
+        user_content = (
+            f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{prompt_text}"
+        )
 
         message_content: dict[str, Any] = {
             "role": "user",
@@ -95,7 +121,15 @@ class PromptBuilder:
     def save_payload_json(
         cls, payload: dict[str, Any], output_path: Path | str
     ) -> Path:
-        """ペイロード辞書を JSON ファイルとして書き出し保存"""
+        """ペイロード辞書を JSON ファイルとして書き出し保存します。
+
+        Args:
+            payload (dict[str, Any]): 送信用ペイロード辞書。
+            output_path (Path | str): 保存先 JSON パス。
+
+        Returns:
+            Path: 保存された JSON ファイルの絶対パス。
+        """
         out_path = Path(output_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
 

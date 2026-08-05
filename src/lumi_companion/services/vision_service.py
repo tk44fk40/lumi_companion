@@ -75,15 +75,11 @@ class VisionExtractorService:
             max_width = self.context.max_image_width_px
             if image.width > max_width:
                 new_height = int(image.height * (max_width / image.width))
-                image = image.resize(
-                    (max_width, new_height), Image.Resampling.LANCZOS
-                )
+                image = image.resize((max_width, new_height), Image.Resampling.LANCZOS)
 
             # JPEG エンコードおよび Base64 化
             buffer = BytesIO()
-            image.save(
-                buffer, format="JPEG", quality=self.context.jpeg_quality
-            )
+            image.save(buffer, format="JPEG", quality=self.context.jpeg_quality)
             b64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
             logger.info("フレーム抽出成功 (%dx%d)", image.width, image.height)

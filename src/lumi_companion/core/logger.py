@@ -14,9 +14,7 @@ class LumiLogger:
     """アプリケーション統一カスタムロガー管理クラス。"""
 
     @classmethod
-    def get_logger(
-        cls, name: str, context: AppContext | None = None
-    ) -> logging.Logger:
+    def get_logger(cls, name: str, context: AppContext | None = None) -> logging.Logger:
         """指定された名称の構造化ロガーを取得・初期化します。
 
         Args:
@@ -49,9 +47,7 @@ class LumiLogger:
             try:
                 log_file = context.log_file_path
                 log_file.parent.mkdir(parents=True, exist_ok=True)
-                file_handler = logging.FileHandler(
-                    log_file, encoding="utf-8"
-                )
+                file_handler = logging.FileHandler(log_file, encoding="utf-8")
                 file_handler.setFormatter(log_format)
                 logger.addHandler(file_handler)
             except OSError as e:

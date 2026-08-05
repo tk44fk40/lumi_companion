@@ -21,9 +21,7 @@ from lumi_companion.models import (
 class AudioServiceProtocol(Protocol):
     """発言抽出・音声処理サービスのインターフェースプロトコル。"""
 
-    async def process_audio_async(
-        self, video_path: Path | str
-    ) -> AudioProcessResult:
+    async def process_audio_async(self, video_path: Path | str) -> AudioProcessResult:
         """非同期で動画の音声を解析し発言字幕リストを取得します。
 
         Args:

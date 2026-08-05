@@ -89,9 +89,7 @@ class AudioProcessorService:
             duration_seconds=float(info.duration),
         )
 
-    async def process_audio_async(
-        self, video_path: Path | str
-    ) -> AudioProcessResult:
+    async def process_audio_async(self, video_path: Path | str) -> AudioProcessResult:
         """非同期で音声トラックから発言区間を抽出します。
 
         Args:

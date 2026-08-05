@@ -74,9 +74,7 @@ class OllamaClientService:
         logger.info("モデル '%s' の自動取得を開始します...", model_name)
 
         try:
-            timeout = httpx.Timeout(
-                self.context.download_timeout_seconds, connect=10.0
-            )
+            timeout = httpx.Timeout(self.context.download_timeout_seconds, connect=10.0)
             async with (
                 httpx.AsyncClient(timeout=timeout) as client,
                 client.stream(
@@ -120,9 +118,7 @@ class OllamaClientService:
         logger.info("Ollama 推論リクエスト送信中 (%s)...", payload.model)
 
         try:
-            timeout = httpx.Timeout(
-                self.context.http_timeout_seconds, connect=10.0
-            )
+            timeout = httpx.Timeout(self.context.http_timeout_seconds, connect=10.0)
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(url, json=payload.to_dict())
                 response.raise_for_status()

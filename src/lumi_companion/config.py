@@ -1,10 +1,16 @@
+"""アプリケーション環境設定モジュール。
+
+本モジュールは、pydantic-settings を利用して .env や環境変数から
+各種設定（Ollama 接続情報、Whisper 設定、デフォルトパス等）を読み込み・管理します。
+"""
+
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """lumi_companion アプリケーション全体の設定クラス"""
+    """lumi_companion アプリケーション全体の設定クラス。"""
 
     model_config = SettingsConfigDict(
         env_file=".env",

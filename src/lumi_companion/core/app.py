@@ -118,9 +118,7 @@ class LumiApp:
             num_ctx=self.context.ollama_num_ctx,
         )
 
-    async def run_step4_llm(
-        self, payload: OllamaPayload
-    ) -> OllamaResponse:
+    async def run_step4_llm(self, payload: OllamaPayload) -> OllamaResponse:
         """Step 4: ローカル Ollama サーバーへの推論リクエストを実行します。
 
         Args:

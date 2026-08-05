@@ -29,9 +29,7 @@ class MockAudioService:
     def __init__(self, context: AppContext | None = None) -> None:
         self.context = context or AppContext()
 
-    async def process_audio_async(
-        self, video_path: Path | str
-    ) -> AudioProcessResult:
+    async def process_audio_async(self, video_path: Path | str) -> AudioProcessResult:
         """Mock の音声処理結果を返却します。"""
         return AudioProcessResult(
             segments=[
