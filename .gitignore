@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Debug outputs & temporary data
+debug_output/
+data/test_videos/*
+!data/test_videos/.gitkeep
+!data/test_videos/README.md
