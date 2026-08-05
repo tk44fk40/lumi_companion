@@ -6,22 +6,13 @@
 
 from collections.abc import Sequence
 
-from lumi_companion.audio.srt_exporter import SRTExporter
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
 from lumi_companion.models.audio import SubtitleSegment
 from lumi_companion.models.prompt import ChatMessage, OllamaPayload
+from lumi_companion.prompt.builder import SYSTEM_PROMPT_RUMIPON, PromptBuilder
 
 logger = LumiLogger.get_logger(__name__)
-
-SYSTEM_PROMPT_RUMIPON = """あなたはライブ配信をリアルタイムで一緒に視聴しているAIパートナー「るみぽん！」(Lumi)です。
-
-【あなたの役割・キャラクター】
-- 配信画面の状況（ゲーム画面やカメラ映像）と配信者の発言を聞いて、自然な一視聴者としてリアクションやコメントを返します。
-- 明るく親しみやすい口調（「〜だよ！」「〜だね！」「おおっ！」など）で応答します。
-- 長文の解説ではなく、チャットに流れるような短文（1〜2文程度、50文字以内）でレスポンスしてください。
-- 画面と発言の文脈に合わせたリアクションを心がけてください。
-"""
 
 
 class PromptBuilderService:
@@ -44,14 +35,7 @@ class PromptBuilderService:
         Returns:
             str: 整形された発言文章。
         """
-        if not subtitles:
-            return "(直近の発言はありません)"
-
-        lines: list[str] = []
-        for seg in subtitles:
-            ts = SRTExporter.format_timestamp(seg.start)
-            lines.append(f"[{ts}] 発言: {seg.text}")
-        return "\n".join(lines)
+        return PromptBuilder.format_subtitles_text(subtitles)
 
     def build_payload(
         self,

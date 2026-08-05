@@ -10,8 +10,8 @@ from pathlib import Path
 
 from faster_whisper import WhisperModel
 
-from lumi_companion.audio.srt_exporter import SubtitleSegment
 from lumi_companion.config import settings
+from lumi_companion.models.audio import SubtitleSegment
 
 logger = logging.getLogger(__name__)
 
