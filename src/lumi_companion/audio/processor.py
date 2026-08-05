@@ -12,6 +12,7 @@ from pathlib import Path
 
 from faster_whisper import WhisperModel
 
+from lumi_companion.audio.post_processor import TextPostProcessor
 from lumi_companion.models.audio import SubtitleSegment
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,11 @@ class AudioProcessor:
         vad_min_silence_duration_ms: int = 500,
         no_speech_threshold: float = 0.6,
         max_chars_per_second: float = 12.0,
+        post_process_normalize: bool = True,
+        post_process_normalize_nums: bool = True,
+        post_process_lower: bool = True,
+        post_process_remove_punct: bool = True,
+        custom_dictionary_path: Path | None = None,
     ) -> None:
         """AudioProcessor を初期化します。
 
@@ -52,6 +58,11 @@ class AudioProcessor:
             vad_min_silence_duration_ms (int): VAD 最小無音時間(ms)。
             no_speech_threshold (float): 無音判定閾値。
             max_chars_per_second (float): 物理的発話速度の許容上限（文字/秒）。
+            post_process_normalize (bool): 全角半角統一等の正規化を行うか。
+            post_process_normalize_nums (bool): 数字正規化を行うか。
+            post_process_lower (bool): 小文字化を行うか。
+            post_process_remove_punct (bool): 句読点・記号の除去を行うか。
+            custom_dictionary_path (Path | None): 後処理置換辞書ファイルのパス。
         """
         self.model_size = model_size
         self.device = device
@@ -65,6 +76,11 @@ class AudioProcessor:
         self.vad_min_silence_duration_ms = vad_min_silence_duration_ms
         self.no_speech_threshold = no_speech_threshold
         self.max_chars_per_second = max_chars_per_second
+        self.post_process_normalize = post_process_normalize
+        self.post_process_normalize_nums = post_process_normalize_nums
+        self.post_process_lower = post_process_lower
+        self.post_process_remove_punct = post_process_remove_punct
+        self.custom_dictionary_path = custom_dictionary_path
         self._model: WhisperModel | None = None
 
     def _get_model(self) -> WhisperModel:
@@ -173,6 +189,15 @@ class AudioProcessor:
         )
 
         results = self._sanitize_segments(raw_segments)
+        post_processor = TextPostProcessor(
+            dictionary_path=self.custom_dictionary_path,
+            normalize=self.post_process_normalize,
+            normalize_nums=self.post_process_normalize_nums,
+            lower=self.post_process_lower,
+            remove_punct=self.post_process_remove_punct,
+        )
+        results = post_processor.apply_to_segments(results)
+
         logger.info("発言抽出完了 (%d 件のセグメントを検出)", len(results))
         return results
 

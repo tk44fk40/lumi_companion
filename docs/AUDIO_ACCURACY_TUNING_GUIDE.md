@@ -21,6 +21,11 @@
 | `WHISPER_VAD_THRESHOLD` | `0.35` | 音声検出閾値（標準0.5）。値を下げる（0.30〜0.35）ことで小さな独り言の切り落としを防ぐ。 |
 | `WHISPER_VAD_MIN_SILENCE_DURATION_MS` | `500` | 発話区間とみなす最小無音時間(ms)。 |
 | `WHISPER_NO_SPEECH_THRESHOLD` | `0.6` | 無音判定閾値。 |
+| `WHISPER_POST_PROCESS_NORMALIZE` | `True` | 後処理における Unicode NFKC 正規化の有効化。 |
+| `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（全角・漢数字・ローマ数字 ➔ 算用数字）の有効化。 |
+| `WHISPER_POST_PROCESS_LOWER` | `True` | 後処理における英小文字化の有効化。 |
+| `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `True` | 後処理における句読点・記号・余白クリーン化の有効化。 |
+| `CUSTOM_DICTIONARY_PATH` | `"data/custom_dictionary.yaml"` | 置換辞書ファイルのパス。 |
 
 ### ユースケース別チューニング例
 - **ケース1: 独り言や声が小さく語頭・語尾が切れる場合**
@@ -65,3 +70,49 @@ $$\text{CER} = \frac{\text{挿入数} + \text{削除数} + \text{置換数}}{\te
 - **評価合格基準**:
   - 旧設定 (base / プロンプトなし): CER 30%〜50%
   - **新設定 (large-v3-turbo / 独り言プロンプト / VAD 0.35)**: **CER < 15%** を達成すること。
+
+### C. CER 自動計測スクリプトと評価手順
+
+[scripts/evaluate_cer.py](file:///home/tk44/ghq/github.com/tk44fk40/lumi_companion/scripts/evaluate_cer.py) を使用して、正解データ（`.txt`）と認識結果（`debug_output/subtitles.json` 等）の文字誤り率（CER）を自動計測します。
+
+```bash
+# 基本計測コマンド
+uv run python scripts/evaluate_cer.py --ref path/to/ref.txt --hyp debug_output/subtitles.json
+```
+
+※デフォルトで数字表現（全角数字、漢数字「一,二..」、ローマ数字「Ⅰ,Ⅱ.. / I,II..」、丸数字「①..」）はすべて半角算用数字（`1, 2, 3...`）に自動統一された上で精度計算されます（無効化オプション: `--no-normalize-nums`）。
+
+レポートには CER (%) に加えて、エラー内訳 (置換S / 削除D / 挿入I) と要因の自動分析ヒントが表示されます。
+
+---
+
+## 4. 後処理置換辞書機能 (Custom Replacement Dictionary)
+
+Whisperでどうしても誤変換される固有表現や専門用語を、後処理で確実に置換補正する機能です。
+
+### A. 辞書ファイルの設定 (`data/custom_dictionary.yaml`)
+
+[data/custom_dictionary.yaml](file:///home/tk44/ghq/github.com/tk44fk40/lumi_companion/data/custom_dictionary.yaml) に `置換前: 置換後` のペアを記述します（コメント可能）。
+
+```yaml
+# lumi_companion 置換辞書
+ルミ: lumi_companion
+文字誤率: 文字誤り率
+ウェーパー: Whisper
+```
+
+`.env` で辞書ファイルのパスを変更することも可能です：
+```env
+CUSTOM_DICTIONARY_PATH="data/custom_dictionary.yaml"
+```
+
+### B. 置換適用後の CER 比較検証
+
+評価スクリプトに `--dict` を渡すことで、置換辞書適用後の CER 改善効果を直接測定できます。
+
+```bash
+uv run python scripts/evaluate_cer.py \
+  --ref path/to/ref.txt \
+  --hyp debug_output/subtitles.json \
+  --dict data/custom_dictionary.yaml
+```

@@ -62,3 +62,29 @@ async def test_ollama_client_service_connection_error(
     # Act & Assert (実行・検証)
     with pytest.raises(ConnectionError):
         await service.chat_async(payload)
+
+
+@pytest.mark.asyncio
+async def test_ollama_client_service_check_model_installed(
+    mock_context: AppContext,
+) -> None:
+    """OllamaClientService の check_model_installed 委譲を検証します。"""
+    mock_client = AsyncMock()
+    mock_client.check_model_installed.return_value = True
+    service = OllamaClientService(context=mock_context, client=mock_client)
+
+    result = await service.check_model_installed("moondream")
+    assert result is True
+    mock_client.check_model_installed.assert_called_once_with("moondream")
+
+
+@pytest.mark.asyncio
+async def test_ollama_client_service_pull_model(
+    mock_context: AppContext,
+) -> None:
+    """OllamaClientService の pull_model 委譲を検証します。"""
+    mock_client = AsyncMock()
+    service = OllamaClientService(context=mock_context, client=mock_client)
+
+    await service.pull_model("moondream")
+    mock_client.pull_model.assert_called_once_with("moondream")

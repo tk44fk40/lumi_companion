@@ -92,6 +92,13 @@ class Settings(BaseSettings):
     # デフォルトの入出力パス
     default_video_path: Path = Path("data/test_videos/sample.mp4")
     debug_output_dir: Path = Path("debug_output")
+    custom_dictionary_path: Path = Path("data/custom_dictionary.yaml")
+
+    # 後処理・テキスト正規化設定 (デフォルト全て True)
+    whisper_post_process_normalize: bool = True
+    whisper_post_process_normalize_nums: bool = True
+    whisper_post_process_lower: bool = True
+    whisper_post_process_remove_punct: bool = True
 
     @model_validator(mode="after")
     def _validate_whisper_device(self) -> Self:

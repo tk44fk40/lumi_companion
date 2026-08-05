@@ -6,6 +6,8 @@
 import logging
 from pathlib import Path
 
+import pytest
+
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
 
@@ -41,3 +43,19 @@ def test_logger_get_logger_reuse_handlers() -> None:
 
     logger2 = LumiLogger.get_logger("test_reuse")
     assert len(logger2.handlers) == handler_count
+
+
+def test_logger_get_logger_os_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ログファイル作成時に OSError が発生した場合のフォールバックを検証します。"""
+
+    context = AppContext(log_file_path=Path("/invalid/path/test.log"))
+
+    def mock_mkdir(*args: object, **kwargs: object) -> None:
+        raise OSError("Permission denied")
+
+    monkeypatch.setattr(Path, "mkdir", mock_mkdir)
+
+    logger = LumiLogger.get_logger("test_os_error", context)
+    assert logger.name == "test_os_error"
+    # ファイルハンドラーが追加されず StreamHandler のみで動作すること
+    assert not any(isinstance(h, logging.FileHandler) for h in logger.handlers)
