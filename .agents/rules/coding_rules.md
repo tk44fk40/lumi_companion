@@ -5,9 +5,11 @@
 - **命名**: クラス `PascalCase`, 関数/変数/ファイル `snake_case`, 定数 `UPPER_SNAKE_CASE`
 - **フォーマット**: 4スペースインデント, 1行最大88文字（Ruff標準）。日本語コメント/Docstringは句読点で適宜改行。
 
-## 2. Issue / ブランチ / PR 規約
+## 2. 計画書 / Issue / ブランチ / PR 規約
+- **優先順位**: Git・ブランチ運用は本プロジェクト規約（Issue連動ブランチ）を最優先適用する。
 - **Issue & ブランチ**: `gh issue create` ➔ ブランチ名 `issue-<Issue番号>/<機能名>`
 - **PR & マージ**: `gh pr create` (本文に `Closes #<Issue番号>` 明記) ➔ スカッシュマージ (`gh pr merge --squash`)
+- **計画書の作成**: 指示された場合は計画書を作成し、作業タスクリストで進捗を管理し、Issueへも反映する。
 - **計画書メタデータ**: `implementation_plan.md` ヘッダーに関連 Issue, 作業ブランチ, PR 番号/URL を記載。
 
 ## 3. 規模制限 & 可読性 (KISS原則)
@@ -43,11 +45,7 @@
 - 中間出力 (字幕JSON/SRT, 画像等) は `debug_output/` へ出力。コンポーネント単体でデバッグ可能スクリプト化。
 
 ## 11. AIコード生成 & セルフチェック規範
-コード作成・修正時は以下の手続・自己検証を実施し、回答末尾に報告すること（手続・ログ添付手順は `SKILL.md` 参照）：
-1. **シグネチャ優先提示**: 実装前に型定義・Docstring の合意を得る (`Any` 排除)。
-2. **TDD テスト先行作成**: 実装前に `tests/` 内にテストを作成。
-3. **アトミック実装**: 最小単位でコードを更新。
-4. **セルフチェック**: スキルに従いセルフチェックを実施。
+コード作成・修正における自律ワークフロー（Issue作成、シグネチャ優先提示、TDDテスト先行作成、セルフチェック観点、エビデンスログ提示等）の具体的な手順については、[autonomous-code-workflow](file:///home/tk44/ghq/github.com/tk44fk40/lumi_companion/.agents/skills/autonomous-code-workflow/SKILL.md) スキルに完全準拠して実施すること。
 
 ## 12. テストコード (`tests/`) 規範
 - **構造化**: モジュール単位で `tests/test_*.py` に分割。共通化は `conftest.py` を活用。
