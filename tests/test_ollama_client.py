@@ -95,7 +95,7 @@ class TestOllamaClient:
 
     @pytest.mark.asyncio
     async def test_pull_model_stream_ends_without_success_status(self) -> None:
-        """success ステータスが送られずにストリームが終了した場合も正常終了することを検証します。"""
+        """Success ステータスが送られずにストリームが終了した場合も正常終了することを検証します。"""
         client = OllamaClient(host="http://test:11434")
 
         lines = [

@@ -102,8 +102,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_whisper_device(self) -> Self:
-        """whisper_device が 'auto' の際、CUDA ライブラリのセットアップを試み、
-        成功時は 'cuda'、失敗時は 'cpu' へ自動フォールバックします。
+        """whisper_device が 'auto' の場合のデバイス設定バリデーション。
+
+        CUDA ライブラリのセットアップを試み、成功時は 'cuda'、失敗時は 'cpu' へ自動フォールバックします。
 
         Returns:
             Self: バリデーション・環境セットアップ済みの Settings インスタンス。

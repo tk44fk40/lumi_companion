@@ -13,7 +13,7 @@ from lumi_companion.core.logger import LumiLogger
 
 
 def test_logger_get_logger_no_context() -> None:
-    """context を指定しない場合のロガー初期化を検証します。"""
+    """Context を指定しない場合のロガー初期化を検証します。"""
     logger = LumiLogger.get_logger("test_no_context")
 
     assert logger.name == "test_no_context"
@@ -22,7 +22,7 @@ def test_logger_get_logger_no_context() -> None:
 
 
 def test_logger_get_logger_with_context(tmp_path: Path) -> None:
-    """context を指定した場合のファイルハンドラ設定を検証します。"""
+    """Context を指定した場合のファイルハンドラ設定を検証します。"""
     log_file = tmp_path / "test_app.log"
     context = AppContext(log_file_path=log_file)
 
@@ -47,7 +47,6 @@ def test_logger_get_logger_reuse_handlers() -> None:
 
 def test_logger_get_logger_os_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """ログファイル作成時に OSError が発生した場合のフォールバックを検証します。"""
-
     context = AppContext(log_file_path=Path("/invalid/path/test.log"))
 
     def mock_mkdir(*args: object, **kwargs: object) -> None:

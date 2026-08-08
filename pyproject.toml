@@ -40,8 +40,19 @@ select = [
     "I",   # isort
     "B",   # flake8-bugbear
     "UP",  # pyupgrade
+    "D",   # pydocstyle
 ]
-ignore = ["E501"]
+ignore = [
+    "E501",  # 行長オーバーは ruff format に任せる
+    "D415",  # Docstring 末尾ピリオド無効化 (日本語用)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D101", "D102", "D103", "D107"]
+"__init__.py" = ["D104"]
 
 [tool.ruff.format]
 quote-style = "double"
