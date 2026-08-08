@@ -28,9 +28,9 @@ def test_audio_processor_initialization_defaults() -> None:
     assert processor.vad_min_silence_duration_ms == 500
     assert processor.no_speech_threshold == 0.6
     assert processor.max_chars_per_second == 12.0
-    assert processor.post_process_normalize is True
+    assert processor.post_process_to_hankaku is False
     assert processor.post_process_normalize_nums is True
-    assert processor.post_process_lower is True
+    assert processor.post_process_lower is False
     assert processor.post_process_remove_punct is False
 
 

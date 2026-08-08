@@ -22,22 +22,22 @@ class TextPostProcessor:
     def __init__(
         self,
         dictionary_path: Path | None = None,
-        normalize: bool = True,
+        to_hankaku: bool = False,
         normalize_nums: bool = True,
-        lower: bool = True,
+        lower: bool = False,
         remove_punct: bool = False,
     ) -> None:
         """TextPostProcessor を初期化します。
 
         Args:
             dictionary_path (Path | None): 置換辞書ファイル (.yaml / .json) のパス。
-            normalize (bool): 全角半角統一 (NFKC) 等の正規化を行うか (デフォルト: True)。
+            to_hankaku (bool): 全角英数や全角記号を半角に変換する (NFKC) か (デフォルト: False)。
             normalize_nums (bool): 数字正規化 (漢数字・ローマ数字->全角数字) を行うか (デフォルト: True)。
-            lower (bool): 英小文字化を行うか (デフォルト: True)。
+            lower (bool): 英小文字化を行うか (デフォルト: False)。
             remove_punct (bool): 句読点・記号・余白の除去を行うか (デフォルト: False)。
         """
         self.dictionary_path = dictionary_path
-        self.normalize = normalize
+        self.to_hankaku = to_hankaku
         self.normalize_nums = normalize_nums
         self.lower = lower
         self.remove_punct = remove_punct
@@ -100,10 +100,36 @@ class TextPostProcessor:
         Returns:
             str: 正規化済みの文字列。
         """
-        # 1. Unicode NFKC 正規化 (全角数字 -> 半角数字, 丸数字 ① -> 1 等)
-        text = unicodedata.normalize("NFKC", text)
+        # 1. 全角数字の半角化
+        text = text.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
 
-        # 2. ローマ数字 (アルファベット及び特殊記号) の長順変換
+        # 2. 丸数字の変換
+        maru_map = {
+            "①": "1",
+            "②": "2",
+            "③": "3",
+            "④": "4",
+            "⑤": "5",
+            "⑥": "6",
+            "⑦": "7",
+            "⑧": "8",
+            "⑨": "9",
+            "⑩": "10",
+            "⑪": "11",
+            "⑫": "12",
+            "⑬": "13",
+            "⑭": "14",
+            "⑮": "15",
+            "⑯": "16",
+            "⑰": "17",
+            "⑱": "18",
+            "⑲": "19",
+            "⑳": "20",
+        }
+        for src, dst in maru_map.items():
+            text = text.replace(src, dst)
+
+        # 3. ローマ数字 (アルファベット及び特殊記号) の長順変換
         roman_map = [
             ("VIII", "8"),
             ("VII", "7"),
@@ -129,7 +155,7 @@ class TextPostProcessor:
         for r_src, r_dst in roman_map:
             text = text.replace(r_src, r_dst)
 
-        # 3. 漢数字のシンプル変換
+        # 4. 漢数字のシンプル変換
         kanji_map = [
             ("十", "10"),
             ("九", "9"),
@@ -169,9 +195,13 @@ class TextPostProcessor:
             return text
 
         result = text
+
+        # 1. 数字の全角化
         if self.normalize_nums:
             result = self.normalize_numbers(result)
-        elif self.normalize:
+
+        # 2. 全角半角統一 (NFKC)
+        if self.to_hankaku:
             result = unicodedata.normalize("NFKC", result)
 
         if self.remove_punct:
@@ -205,8 +235,7 @@ class TextPostProcessor:
                     result = result.replace(key, val)
 
         # 2. テキスト正規化の適用
-        if self.normalize or self.normalize_nums:
-            result = self.normalize_text(result)
+        result = self.normalize_text(result)
 
         return result
 

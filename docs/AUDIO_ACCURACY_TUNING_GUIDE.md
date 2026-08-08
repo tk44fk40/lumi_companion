@@ -21,9 +21,9 @@
 | `WHISPER_VAD_THRESHOLD` | `0.35` | 音声検出閾値（標準0.5）。値を下げる（0.30〜0.35）ことで小さな独り言の切り落としを防ぐ。 |
 | `WHISPER_VAD_MIN_SILENCE_DURATION_MS` | `500` | 発話区間とみなす最小無音時間(ms)。 |
 | `WHISPER_NO_SPEECH_THRESHOLD` | `0.6` | 無音判定閾値。 |
-| `WHISPER_POST_PROCESS_NORMALIZE` | `True` | 後処理における Unicode NFKC 正規化の有効化。 |
+| `WHISPER_POST_PROCESS_TO_HANKAKU` | `False` | 後処理における全角英数記号の半角化 (NFKC) の有効化。 |
 | `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（半角・漢数字・ローマ数字 ➔ 全角数字）の有効化。 |
-| `WHISPER_POST_PROCESS_LOWER` | `True` | 後処理における英小文字化の有効化。 |
+| `WHISPER_POST_PROCESS_LOWER` | `False` | 後処理における英小文字化の有効化。 |
 | `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `False` | 後処理における句読点・記号・余白クリーン化の有効化（CER評価等の特殊用途向け）。 |
 | `CUSTOM_DICTIONARY_PATH` | `"data/custom_dictionary.yaml"` | 置換辞書ファイルのパス。 |
 

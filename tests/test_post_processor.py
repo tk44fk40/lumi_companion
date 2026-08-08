@@ -65,7 +65,7 @@ class TestTextPostProcessor:
 
         # Assert
         # "ABC" が優先的に "123" に置換され、残りの "AB" が "99" に置換された上で数字全角化されること
-        assert result == "こんにちは、lumi_companion! １２３と９９のテスト。"
+        assert result == "こんにちは、lumi_companion！ １２３と９９のテスト。"
 
     def test_apply_to_segments(self, tmp_path: Path) -> None:
         # Arrange
@@ -90,7 +90,7 @@ class TestTextPostProcessor:
         # Arrange
         processor = TextPostProcessor(
             dictionary_path=None,
-            normalize=False,
+            to_hankaku=False,
             normalize_nums=False,
             lower=False,
             remove_punct=False,
@@ -116,7 +116,7 @@ class TestTextPostProcessor:
         # Arrange
         processor = TextPostProcessor(
             dictionary_path=None,
-            normalize=True,
+            to_hankaku=True,
             normalize_nums=True,
             lower=True,
             remove_punct=True,
@@ -127,8 +127,8 @@ class TestTextPostProcessor:
         res = processor.apply_to_text(raw)
 
         # Assert
-        # 句読点・記号・スペース除去、小文字化、数字正規化が適用されること
-        assert res == "こんにちは世界第１章１００abc"
+        # 句読点・記号・スペース除去、小文字化、数字正規化、半角化が適用されること
+        assert res == "こんにちは世界第1章100abc"
 
     def test_load_dictionary_invalid_format(self, tmp_path: Path) -> None:
         # Arrange
@@ -153,9 +153,9 @@ class TestTextPostProcessor:
 
         # Assert
         assert processor.remove_punct is False
-        assert processor.normalize is True
+        assert processor.to_hankaku is False
         assert processor.normalize_nums is True
-        assert processor.lower is True
+        assert processor.lower is False
 
     def test_default_apply_to_text_preserves_punctuation(self) -> None:
         # Arrange
@@ -166,8 +166,8 @@ class TestTextPostProcessor:
         res = processor.apply_to_text(raw)
 
         # Assert
-        # 句読点（、）、感嘆符（!）、疑問符（?）、空白が保持され、小文字化・数字正規化が適用されること
-        assert res == "こんにちは、世界! テスト文ですね? 第１章 １００ abc"
+        # 句読点（、）、感嘆符（!）、疑問符（?）、空白が保持され、数字正規化が適用されること (小文字化・半角化はデフォルト無効)
+        assert res == "こんにちは、世界！ テスト文ですね？ 第１章 １００ ABC"
 
     def test_normalize_text_keep_punct_with_newlines(self) -> None:
         # Arrange
@@ -190,7 +190,7 @@ class TestTextPostProcessor:
     def test_normalize_text_normalize_only(self) -> None:
         # Arrange
         processor = TextPostProcessor(
-            normalize=True,
+            to_hankaku=True,
             normalize_nums=False,
             lower=False,
             remove_punct=False,
@@ -207,3 +207,50 @@ class TestTextPostProcessor:
         # Act & Assert
         with pytest.raises(ValueError, match="辞書ファイルの形式が正しくありません"):
             TextPostProcessor.load_dictionary(txt_path)
+
+    @pytest.mark.parametrize(
+        "to_hankaku, normalize_nums, lower, remove_punct, expected",
+        [
+            # (to_hankaku, normalize_nums, lower, remove_punct)
+            (False, False, False, False, "ＡＢＣ １２３ ① Ⅰ 十"),
+            (False, False, False, True, "ＡＢＣ１２３①Ⅰ十"),
+            (True, False, False, False, "ABC 123 1 I 十"),
+            (True, False, False, True, "ABC1231I十"),
+            (False, True, False, False, "ＡＢＣ １２３ １ １ １０"),
+            (False, True, False, True, "ＡＢＣ１２３１１１０"),
+            (False, False, True, False, "ａｂｃ １２３ ① ⅰ 十"),
+            (False, False, True, True, "ａｂｃ１２３①ⅰ十"),
+            (True, True, False, False, "ABC 123 1 1 10"),
+            (True, True, False, True, "ABC1231110"),
+            (True, False, True, False, "abc 123 1 i 十"),
+            (True, False, True, True, "abc1231i十"),
+            (False, True, True, False, "ａｂｃ １２３ １ １ １０"),
+            (False, True, True, True, "ａｂｃ１２３１１１０"),
+            (True, True, True, False, "abc 123 1 1 10"),
+            (True, True, True, True, "abc1231110"),
+        ],
+    )
+    def test_normalization_flags_independence(
+        self,
+        to_hankaku: bool,
+        normalize_nums: bool,
+        lower: bool,
+        remove_punct: bool,
+        expected: str,
+    ) -> None:
+        """各オプションが独立して機能し、意図しない副作用がないことを検証する。"""
+        # Arrange
+        processor = TextPostProcessor(
+            dictionary_path=None,
+            to_hankaku=to_hankaku,
+            normalize_nums=normalize_nums,
+            lower=lower,
+            remove_punct=remove_punct,
+        )
+        raw_text = "ＡＢＣ １２３ ① Ⅰ 十"
+
+        # Act
+        result = processor.normalize_text(raw_text)
+
+        # Assert
+        assert result == expected

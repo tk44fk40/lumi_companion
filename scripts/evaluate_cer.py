@@ -48,14 +48,18 @@ def normalize_numbers(text: str) -> str:
 
 
 def normalize_text(
-    text: str, remove_punct: bool = True, normalize_nums: bool = True
+    text: str,
+    remove_punct: bool = True,
+    normalize_nums: bool = True,
+    to_hankaku: bool = False,
+    lower: bool = False,
 ) -> str:
     """評価用にテキストを正規化する。"""
     processor = TextPostProcessor(
         dictionary_path=None,
-        normalize=True,
+        to_hankaku=to_hankaku,
         normalize_nums=normalize_nums,
-        lower=True,
+        lower=lower,
         remove_punct=remove_punct,
     )
     return processor.normalize_text(text)
@@ -113,6 +117,8 @@ def compute_cer(
     hypothesis_text: str,
     remove_punct: bool = True,
     normalize_nums: bool = True,
+    to_hankaku: bool = False,
+    lower: bool = False,
 ) -> CerResult:
     """正解テキストと認識結果テキストから CER を計算する。
 
@@ -121,15 +127,25 @@ def compute_cer(
         hypothesis_text: 認識結果テキスト
         remove_punct: 句読点除去を行うか (デフォルト: True)
         normalize_nums: 数字正規化を行うか (デフォルト: True)
+        to_hankaku: 全角半角統一を行うか (デフォルト: False)
+        lower: 英小文字化を行うか (デフォルト: False)
 
     Returns:
         CerResult オブジェクト
     """
     ref_norm = normalize_text(
-        reference_text, remove_punct=remove_punct, normalize_nums=normalize_nums
+        reference_text,
+        remove_punct=remove_punct,
+        normalize_nums=normalize_nums,
+        to_hankaku=to_hankaku,
+        lower=lower,
     )
     hyp_norm = normalize_text(
-        hypothesis_text, remove_punct=remove_punct, normalize_nums=normalize_nums
+        hypothesis_text,
+        remove_punct=remove_punct,
+        normalize_nums=normalize_nums,
+        to_hankaku=to_hankaku,
+        lower=lower,
     )
 
     if not ref_norm:
@@ -193,6 +209,16 @@ def main() -> None:
         action="store_true",
         help="漢数字やローマ数字等の全角数字への自動正規化を無効化する",
     )
+    parser.add_argument(
+        "--to-hankaku",
+        action="store_true",
+        help="評価時に全角英数記号の半角化 (NFKC) 等を有効にする",
+    )
+    parser.add_argument(
+        "--lower",
+        action="store_true",
+        help="英小文字化 (lower) を有効にする",
+    )
     args = parser.parse_args()
 
     try:
@@ -214,6 +240,8 @@ def main() -> None:
         hyp_raw,
         remove_punct=not args.keep_punct,
         normalize_nums=not args.no_normalize_nums,
+        to_hankaku=args.to_hankaku,
+        lower=args.lower,
     )
 
     print("\n=== CER (文字誤り率) 評価結果 ===")

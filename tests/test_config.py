@@ -72,7 +72,7 @@ def test_default_whisper_post_process_settings() -> None:
     settings = Settings()
 
     # Assert
-    assert settings.whisper_post_process_normalize is True
+    assert settings.whisper_post_process_to_hankaku is False
     assert settings.whisper_post_process_normalize_nums is True
-    assert settings.whisper_post_process_lower is True
+    assert settings.whisper_post_process_lower is False
     assert settings.whisper_post_process_remove_punct is False
