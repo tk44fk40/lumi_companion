@@ -64,8 +64,8 @@ class TestTextPostProcessor:
         result = processor.apply_to_text("こんにちは、ルミ！ ABCとABのテスト。")
 
         # Assert
-        # "ABC" が優先的に "123" に置換され、残りの "AB" が "99" に置換されること
-        assert result == "こんにちは、lumi_companion! 123と99のテスト。"
+        # "ABC" が優先的に "123" に置換され、残りの "AB" が "99" に置換された上で数字全角化されること
+        assert result == "こんにちは、lumi_companion! １２３と９９のテスト。"
 
     def test_apply_to_segments(self, tmp_path: Path) -> None:
         # Arrange
@@ -110,7 +110,7 @@ class TestTextPostProcessor:
         res = TextPostProcessor.normalize_numbers(raw)
 
         # Assert
-        assert res == "第1章 10個のりんご 1番 123"
+        assert res == "第１章 １０個のりんご １番 １２３"
 
     def test_normalize_text_all_enabled(self) -> None:
         # Arrange
@@ -128,7 +128,7 @@ class TestTextPostProcessor:
 
         # Assert
         # 句読点・記号・スペース除去、小文字化、数字正規化が適用されること
-        assert res == "こんにちは世界第1章100abc"
+        assert res == "こんにちは世界第１章１００abc"
 
     def test_load_dictionary_invalid_format(self, tmp_path: Path) -> None:
         # Arrange
@@ -167,7 +167,7 @@ class TestTextPostProcessor:
 
         # Assert
         # 句読点（、）、感嘆符（!）、疑問符（?）、空白が保持され、小文字化・数字正規化が適用されること
-        assert res == "こんにちは、世界! テスト文ですね? 第1章 100 abc"
+        assert res == "こんにちは、世界! テスト文ですね? 第１章 １００ abc"
 
     def test_normalize_text_keep_punct_with_newlines(self) -> None:
         # Arrange
@@ -178,7 +178,7 @@ class TestTextPostProcessor:
         res = processor.normalize_text(raw)
 
         # Assert
-        assert res == "第1行 第2行"
+        assert res == "第１行 第２行"
 
     def test_normalize_text_empty(self) -> None:
         # Arrange

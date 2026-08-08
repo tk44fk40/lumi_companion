@@ -1,7 +1,7 @@
 """音声認識結果のテキスト後処理・正規化モジュール。
 
 本モジュールは、置換辞書 (.yaml / .json) による単語置換と、
-Unicode (NFKC) 正規化、数字正規化 (漢数字・ローマ数字->算用数字)、
+Unicode (NFKC) 正規化、数字正規化 (漢数字・ローマ数字->全角数字)、
 英小文字化、句読点・クリーン処理を一括で行うクラスを提供します。
 """
 
@@ -32,7 +32,7 @@ class TextPostProcessor:
         Args:
             dictionary_path (Path | None): 置換辞書ファイル (.yaml / .json) のパス。
             normalize (bool): 全角半角統一 (NFKC) 等の正規化を行うか (デフォルト: True)。
-            normalize_nums (bool): 数字正規化 (漢数字・ローマ数字->算用数字) を行うか (デフォルト: True)。
+            normalize_nums (bool): 数字正規化 (漢数字・ローマ数字->全角数字) を行うか (デフォルト: True)。
             lower (bool): 英小文字化を行うか (デフォルト: True)。
             remove_punct (bool): 句読点・記号・余白の除去を行うか (デフォルト: False)。
         """
@@ -92,7 +92,7 @@ class TextPostProcessor:
 
     @staticmethod
     def normalize_numbers(text: str) -> str:
-        """テキスト内の数字表現（漢数字、ローマ数字、全角数字等）を半角算用数字に統一正規化する。
+        """テキスト内の数字表現（漢数字、ローマ数字、半角数字等）を全角数字に統一正規化する。
 
         Args:
             text (str): 対象文字列。
@@ -149,6 +149,10 @@ class TextPostProcessor:
 
         # 「101」など（十1 -> 11）の補正
         text = re.sub(r"10([1-9])", r"1\1", text)
+
+        # 全角数字に変換
+        zenkaku_table = str.maketrans("0123456789", "０１２３４５６７８９")
+        text = text.translate(zenkaku_table)
 
         return text
 

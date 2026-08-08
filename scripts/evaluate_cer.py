@@ -43,7 +43,7 @@ class CerResult:
 
 
 def normalize_numbers(text: str) -> str:
-    """テキスト内の数字表現（漢数字、ローマ数字、全角数字等）を半角算用数字に統一正規化する。"""
+    """テキスト内の数字表現（漢数字、ローマ数字、半角数字等）を全角数字に統一正規化する。"""
     return TextPostProcessor.normalize_numbers(text)
 
 
@@ -191,7 +191,7 @@ def main() -> None:
     parser.add_argument(
         "--no-normalize-nums",
         action="store_true",
-        help="漢数字やローマ数字の算用数字への自動正規化を無効化する",
+        help="漢数字やローマ数字等の全角数字への自動正規化を無効化する",
     )
     args = parser.parse_args()
 

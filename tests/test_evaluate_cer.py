@@ -27,8 +27,8 @@ class TestNormalizeText:
         result = normalize_text(raw_text, remove_punct=True)
 
         # Assert
-        # 全角英数が半角化され小文字化、句読点やスペースが除去されること
-        assert result == "こんにちは世界123abc"
+        # 英字が小文字化、数字は全角統一され、句読点やスペースが除去されること
+        assert result == "こんにちは世界１２３abc"
 
     def test_normalize_keep_punct(self) -> None:
         # Arrange
@@ -49,8 +49,8 @@ class TestNormalizeText:
         result = normalize_text(raw_text, remove_punct=False, normalize_nums=True)
 
         # Assert
-        # すべて 1, 2, 3, 10 等の算用数字に統一されること
-        assert "第1章 第1章 第1章 1つの選択肢 10個のりんご 1番" in result
+        # すべて １, ２, ３, １０ 等の全角数字に統一されること
+        assert "第１章 第１章 第１章 １つの選択肢 １０個のりんご １番" in result
 
 
 class TestLoadTranscript:

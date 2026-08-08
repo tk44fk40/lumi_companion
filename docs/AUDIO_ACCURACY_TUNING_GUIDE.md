@@ -22,7 +22,7 @@
 | `WHISPER_VAD_MIN_SILENCE_DURATION_MS` | `500` | 発話区間とみなす最小無音時間(ms)。 |
 | `WHISPER_NO_SPEECH_THRESHOLD` | `0.6` | 無音判定閾値。 |
 | `WHISPER_POST_PROCESS_NORMALIZE` | `True` | 後処理における Unicode NFKC 正規化の有効化。 |
-| `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（全角・漢数字・ローマ数字 ➔ 算用数字）の有効化。 |
+| `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（半角・漢数字・ローマ数字 ➔ 全角数字）の有効化。 |
 | `WHISPER_POST_PROCESS_LOWER` | `True` | 後処理における英小文字化の有効化。 |
 | `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `False` | 後処理における句読点・記号・余白クリーン化の有効化（CER評価等の特殊用途向け）。 |
 | `CUSTOM_DICTIONARY_PATH` | `"data/custom_dictionary.yaml"` | 置換辞書ファイルのパス。 |
@@ -80,7 +80,7 @@ $$\text{CER} = \frac{\text{挿入数} + \text{削除数} + \text{置換数}}{\te
 uv run python scripts/evaluate_cer.py --ref path/to/ref.txt --hyp debug_output/subtitles.json
 ```
 
-※デフォルトで数字表現（全角数字、漢数字「一,二..」、ローマ数字「Ⅰ,Ⅱ.. / I,II..」、丸数字「①..」）はすべて半角算用数字（`1, 2, 3...`）に自動統一された上で精度計算されます（無効化オプション: `--no-normalize-nums`）。
+※デフォルトで数字表現（半角数字、漢数字「一,二..」、ローマ数字「Ⅰ,Ⅱ.. / I,II..」、丸数字「①..」）はすべて全角数字（`１, ２, ３...`）に自動統一された上で精度計算されます（無効化オプション: `--no-normalize-nums`）。
 
 レポートには CER (%) に加えて、エラー内訳 (置換S / 削除D / 挿入I) と要因の自動分析ヒントが表示されます。
 
