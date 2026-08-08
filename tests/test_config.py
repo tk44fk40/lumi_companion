@@ -64,3 +64,15 @@ def test_whisper_device_explicit_setting() -> None:
 
     # Assert
     assert settings.whisper_device == "cpu"
+
+
+def test_default_whisper_post_process_settings() -> None:
+    """Settings の後処理設定のデフォルト値を検証します。"""
+    # Arrange & Act
+    settings = Settings()
+
+    # Assert
+    assert settings.whisper_post_process_normalize is True
+    assert settings.whisper_post_process_normalize_nums is True
+    assert settings.whisper_post_process_lower is True
+    assert settings.whisper_post_process_remove_punct is False

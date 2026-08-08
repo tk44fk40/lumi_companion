@@ -24,7 +24,7 @@
 | `WHISPER_POST_PROCESS_NORMALIZE` | `True` | 後処理における Unicode NFKC 正規化の有効化。 |
 | `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（全角・漢数字・ローマ数字 ➔ 算用数字）の有効化。 |
 | `WHISPER_POST_PROCESS_LOWER` | `True` | 後処理における英小文字化の有効化。 |
-| `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `True` | 後処理における句読点・記号・余白クリーン化の有効化。 |
+| `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `False` | 後処理における句読点・記号・余白クリーン化の有効化（CER評価等の特殊用途向け）。 |
 | `CUSTOM_DICTIONARY_PATH` | `"data/custom_dictionary.yaml"` | 置換辞書ファイルのパス。 |
 
 ### ユースケース別チューニング例

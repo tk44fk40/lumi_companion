@@ -28,6 +28,10 @@ def test_audio_processor_initialization_defaults() -> None:
     assert processor.vad_min_silence_duration_ms == 500
     assert processor.no_speech_threshold == 0.6
     assert processor.max_chars_per_second == 12.0
+    assert processor.post_process_normalize is True
+    assert processor.post_process_normalize_nums is True
+    assert processor.post_process_lower is True
+    assert processor.post_process_remove_punct is False
 
 
 def test_audio_processor_sanitize_segments_drops_no_speech_hallucination() -> None:
@@ -192,3 +196,25 @@ async def test_audio_processor_process_async(
         # Assert
         assert len(results) == 1
         assert results[0].text == "非同期テスト音声"
+
+
+def test_audio_processor_sanitize_segments_logs_with_total_duration(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """total_duration が指定された場合に進行状況（%）を含むログが出力されることを検証します。"""
+    # Arrange
+    processor = AudioProcessor()
+    fake_segments: list[Any] = [
+        SimpleNamespace(start=0.0, end=10.0, text="途中経過テスト", no_speech_prob=0.1),
+    ]
+
+    # Act
+    with caplog.at_level("INFO"):
+        results = processor._sanitize_segments(fake_segments, total_duration=100.0)
+
+    # Assert
+    assert len(results) == 1
+    assert (
+        "発言検出 [ 10.0s / 100.0s ( 10%)] [0.00s -> 10.00s]: 途中経過テスト"
+        in caplog.text
+    )

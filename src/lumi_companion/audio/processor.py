@@ -40,7 +40,7 @@ class AudioProcessor:
         post_process_normalize: bool = True,
         post_process_normalize_nums: bool = True,
         post_process_lower: bool = True,
-        post_process_remove_punct: bool = True,
+        post_process_remove_punct: bool = False,
         custom_dictionary_path: Path | None = None,
     ) -> None:
         """AudioProcessor を初期化します。
@@ -106,11 +106,15 @@ class AudioProcessor:
     def _sanitize_segments(
         self,
         segments: Iterable[object],
+        total_duration: float = 0.0,
     ) -> list[SubtitleSegment]:
         """Whisper 認識結果からハルシネーション（無音捏造・異常発話速度）を自動判定し除外・正規化します。
 
+        また、有効なセグメントを検出するごとにリアルタイムでログ出力を行います。
+
         Args:
             segments (Iterable[object]): Faster-Whisper から返された Segment オブジェクトのイテラブル。
+            total_duration (float, optional): 音声の全再生時間（秒）。進捗出力用。
 
         Returns:
             list[SubtitleSegment]: フィルタリングおよびクリーン化済みの字幕セグメントリスト。
@@ -145,13 +149,31 @@ class AudioProcessor:
                 )
                 continue
 
-            results.append(
-                SubtitleSegment(
-                    start=round(start, 3),
-                    end=round(end, 3),
-                    text=text,
-                )
+            clean_seg = SubtitleSegment(
+                start=round(start, 3),
+                end=round(end, 3),
+                text=text,
             )
+            results.append(clean_seg)
+
+            if total_duration > 0:
+                progress = min(100.0, (end / total_duration) * 100)
+                logger.info(
+                    "発言検出 [%5.1fs / %5.1fs (%3.0f%%)] [%.2fs -> %.2fs]: %s",
+                    end,
+                    total_duration,
+                    progress,
+                    start,
+                    end,
+                    text,
+                )
+            else:
+                logger.info(
+                    "発言検出 [%.2fs -> %.2fs]: %s",
+                    start,
+                    end,
+                    text,
+                )
 
         return results
 
@@ -174,7 +196,7 @@ class AudioProcessor:
         model = self._get_model()
         logger.info("発言抽出 (Whisper transcription) を開始: %s", path)
 
-        raw_segments, _info = model.transcribe(
+        raw_segments, info = model.transcribe(
             str(path),
             beam_size=self.beam_size,
             language=self.language,
@@ -188,7 +210,15 @@ class AudioProcessor:
             no_speech_threshold=self.no_speech_threshold,
         )
 
-        results = self._sanitize_segments(raw_segments)
+        total_duration = getattr(info, "duration", 0.0)
+        detected_language = getattr(info, "language", self.language)
+        logger.info(
+            "音声トラック解析中... (検出言語=%s, 総再生時間=%.1fs)",
+            detected_language,
+            total_duration,
+        )
+
+        results = self._sanitize_segments(raw_segments, total_duration=total_duration)
         post_processor = TextPostProcessor(
             dictionary_path=self.custom_dictionary_path,
             normalize=self.post_process_normalize,

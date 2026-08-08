@@ -94,11 +94,11 @@ class Settings(BaseSettings):
     debug_output_dir: Path = Path("debug_output")
     custom_dictionary_path: Path = Path("data/custom_dictionary.yaml")
 
-    # 後処理・テキスト正規化設定 (デフォルト全て True)
+    # 後処理・テキスト正規化設定
     whisper_post_process_normalize: bool = True
     whisper_post_process_normalize_nums: bool = True
     whisper_post_process_lower: bool = True
-    whisper_post_process_remove_punct: bool = True
+    whisper_post_process_remove_punct: bool = False
 
     @model_validator(mode="after")
     def _validate_whisper_device(self) -> Self:

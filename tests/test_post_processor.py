@@ -147,6 +147,28 @@ class TestTextPostProcessor:
         assert processor.apply_to_text("") == ""
         assert processor.apply_to_segments([]) == []
 
+    def test_default_initialization(self) -> None:
+        # Arrange & Act
+        processor = TextPostProcessor()
+
+        # Assert
+        assert processor.remove_punct is False
+        assert processor.normalize is True
+        assert processor.normalize_nums is True
+        assert processor.lower is True
+
+    def test_default_apply_to_text_preserves_punctuation(self) -> None:
+        # Arrange
+        processor = TextPostProcessor()
+        raw = "こんにちは、世界！ テスト文ですね？ 第I章 100 ABC"
+
+        # Act
+        res = processor.apply_to_text(raw)
+
+        # Assert
+        # 句読点（、）、感嘆符（!）、疑問符（?）、空白が保持され、小文字化・数字正規化が適用されること
+        assert res == "こんにちは、世界! テスト文ですね? 第1章 100 abc"
+
     def test_normalize_text_keep_punct_with_newlines(self) -> None:
         # Arrange
         processor = TextPostProcessor(remove_punct=False)

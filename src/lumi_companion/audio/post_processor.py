@@ -25,7 +25,7 @@ class TextPostProcessor:
         normalize: bool = True,
         normalize_nums: bool = True,
         lower: bool = True,
-        remove_punct: bool = True,
+        remove_punct: bool = False,
     ) -> None:
         """TextPostProcessor を初期化します。
 
@@ -34,7 +34,7 @@ class TextPostProcessor:
             normalize (bool): 全角半角統一 (NFKC) 等の正規化を行うか (デフォルト: True)。
             normalize_nums (bool): 数字正規化 (漢数字・ローマ数字->算用数字) を行うか (デフォルト: True)。
             lower (bool): 英小文字化を行うか (デフォルト: True)。
-            remove_punct (bool): 句読点・記号・余白の除去を行うか (デフォルト: True)。
+            remove_punct (bool): 句読点・記号・余白の除去を行うか (デフォルト: False)。
         """
         self.dictionary_path = dictionary_path
         self.normalize = normalize
@@ -171,7 +171,7 @@ class TextPostProcessor:
             result = unicodedata.normalize("NFKC", result)
 
         if self.remove_punct:
-            result = re.sub(r"[、、。！？!?\s\r\n]", "", result)
+            result = re.sub(r"[、。！？!?\s\r\n]", "", result)
         else:
             result = re.sub(r"[\r\n]+", " ", result).strip()
 
