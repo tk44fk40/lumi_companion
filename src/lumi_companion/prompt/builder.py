@@ -23,6 +23,7 @@ SYSTEM_PROMPT_RUMIPON = """あなたはライブ配信をリアルタイムで�
 - 明るく親しみやすい口調（「〜だよ！」「〜だね！」「おおっ！」など）で応答します。
 - 長文の解説ではなく、チャットに流れるような短文（1〜2文程度、50文字以内）でレスポンスしてください。
 - 画面と発言の文脈に合わせたリアクションを心がけてください。
+- 内部的な推論や思考プロセスは極力短く簡潔に行い、過度な深読みや長考は避けてください。すぐに結論を導き出し、速やかに回答を出力してください。
 """
 
 
@@ -33,13 +34,13 @@ class PromptBuilder:
     def format_subtitles_text(
         cls,
         segments: Sequence[SubtitleSegment],
-        max_segments: int = 30,
+        max_chars: int = 2000,
     ) -> str:
         """字幕セグメントリストをタイムスタンプ付きのテキスト文章に整形します。
 
         Args:
             segments (Sequence[SubtitleSegment]): 発言字幕セグメントのシーケンス。
-            max_segments (int, optional): プロンプトに含める最大直近セグメント数。デフォルト 30。
+            max_chars (int, optional): プロンプトに含める最大文字数。デフォルト 2000。
 
         Returns:
             str: タイムスタンプ付きで整形された字幕テキスト。
@@ -47,13 +48,23 @@ class PromptBuilder:
         if not segments:
             return "(直近の発言はありません)"
 
-        recent_segments = segments[-max_segments:] if max_segments > 0 else segments
         lines: list[str] = []
-        for seg in recent_segments:
-            ts = SubtitleExporter.format_timestamp(seg.start)
-            lines.append(f"[{ts}] 発言: {seg.text}")
+        current_chars = 0
 
-        return "\n".join(lines)
+        for seg in reversed(segments):
+            ts = SubtitleExporter.format_timestamp(seg.start)
+            line = f"[{ts}] 発言: {seg.text}"
+
+            # 改行文字分を加味（最初の要素以外は +1 文字）
+            line_len = len(line) + (1 if lines else 0)
+
+            if lines and current_chars + line_len > max_chars:
+                break
+
+            lines.append(line)
+            current_chars += line_len
+
+        return "\n".join(reversed(lines))
 
     @classmethod
     def build_payload(

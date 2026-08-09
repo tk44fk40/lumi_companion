@@ -38,6 +38,19 @@ def test_prompt_builder_format_subtitles_text_empty() -> None:
     assert formatted == "(直近の発言はありません)"
 
 
+def test_prompt_builder_format_subtitles_text_max_chars() -> None:
+    """字幕セグメントが文字数上限に達した場合の挙動を検証します。"""
+    segments = [
+        SubtitleSegment(start=1.0, end=2.0, text="最初の発言です"),
+        SubtitleSegment(start=2.0, end=3.0, text="二番目の発言です"),
+        SubtitleSegment(start=3.0, end=4.0, text="最後の発言です"),
+    ]
+    # "最後の発言です" を含む1行が約30文字なので、50文字制限なら最新の1つだけ入るかテスト
+    formatted = PromptBuilder.format_subtitles_text(segments, max_chars=50)
+    assert "最後の発言です" in formatted
+    assert "最初の発言です" not in formatted
+
+
 def test_prompt_builder_build_payload_defaults() -> None:
     """PromptBuilder.build_payload でパラメータを省略した場合のデフォルト値を検証します。"""
     # Act
