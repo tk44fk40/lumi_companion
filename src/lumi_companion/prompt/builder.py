@@ -30,11 +30,16 @@ class PromptBuilder:
     """Ollama Chat API 互換プロンプト JSON 構築クラス。"""
 
     @classmethod
-    def format_subtitles_text(cls, segments: Sequence[SubtitleSegment]) -> str:
+    def format_subtitles_text(
+        cls,
+        segments: Sequence[SubtitleSegment],
+        max_segments: int = 30,
+    ) -> str:
         """字幕セグメントリストをタイムスタンプ付きのテキスト文章に整形します。
 
         Args:
             segments (Sequence[SubtitleSegment]): 発言字幕セグメントのシーケンス。
+            max_segments (int, optional): プロンプトに含める最大直近セグメント数。デフォルト 30。
 
         Returns:
             str: タイムスタンプ付きで整形された字幕テキスト。
@@ -42,8 +47,9 @@ class PromptBuilder:
         if not segments:
             return "(直近の発言はありません)"
 
+        recent_segments = segments[-max_segments:] if max_segments > 0 else segments
         lines: list[str] = []
-        for seg in segments:
+        for seg in recent_segments:
             ts = SubtitleExporter.format_timestamp(seg.start)
             lines.append(f"[{ts}] 発言: {seg.text}")
 

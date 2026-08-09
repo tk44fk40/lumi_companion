@@ -71,23 +71,24 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Ollama 設定 (Vision対応標準モデル: moondream, llava, llama3.2-vision 等)
+    # Ollama 設定 (Vision対応標準モデル: thatdamai/qwen3-vl:2b, llava, moondream 等)
     ollama_host: str = "http://localhost:11434"
-    ollama_model: str = "moondream"
-    ollama_num_ctx: int = 4096
+    ollama_model: str = "thatdamai/qwen3-vl:2b"
+    ollama_num_ctx: int = 8192
 
     # Whisper / 音声設定
     whisper_model_size: str = "large-v3-turbo"  # small, medium, large-v3-turbo 等
     whisper_device: str = "auto"  # cuda / cpu
-    whisper_compute_type: str = "default"  # float16, int8 等
+    whisper_compute_type: str = "float16"  # float16, int8 等
     whisper_language: str = "ja"
     whisper_beam_size: int = 5
-    whisper_initial_prompt: str = "えーっと、そうだな。今日は何をしようかな。とりあえずこれを試してみるか……よし、これでいこう。"
+    whisper_initial_prompt: str = "日本語のゲーム実況・雑談配信です。話し言葉や感嘆詞を含めて正確に文字起こしします。"
     whisper_condition_on_previous_text: bool = False
     whisper_vad_filter: bool = True
     whisper_vad_threshold: float = 0.35
     whisper_vad_min_silence_duration_ms: int = 500
     whisper_no_speech_threshold: float = 0.6
+    whisper_max_segment_chars: int = 25
 
     # デフォルトの入出力パス
     default_video_path: Path = Path("data/test_videos/sample.mp4")

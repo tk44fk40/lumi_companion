@@ -253,11 +253,12 @@ class TextPostProcessor:
         if not segments:
             return segments
 
-        updated_segments: list[SubtitleSegment] = []
+        normalized_segments: list[SubtitleSegment] = []
         for seg in segments:
             new_text = self.apply_to_text(seg.text)
-            updated_segments.append(
-                SubtitleSegment(start=seg.start, end=seg.end, text=new_text)
-            )
+            if new_text:
+                normalized_segments.append(
+                    SubtitleSegment(start=seg.start, end=seg.end, text=new_text)
+                )
 
-        return updated_segments
+        return normalized_segments

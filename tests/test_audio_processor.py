@@ -218,3 +218,23 @@ def test_audio_processor_sanitize_segments_logs_with_total_duration(
         "発言検出 [ 10.0s / 100.0s ( 10%)] [0.00s -> 10.00s]: 途中経過テスト"
         in caplog.text
     )
+
+
+def test_audio_processor_split_long_segment_by_max_chars() -> None:
+    """長大セグメントが 25 文字前後の句読点位置で自動分割されることを検証します。"""
+    # Arrange
+    processor = AudioProcessor(max_segment_chars=25)
+    long_text = (
+        "買ったら買ったら、このやつで、おはようございます。"
+        "おはようございます。あっという間に相談しちゃって、死んじゃんじゃん。"
+    )
+    seg = SubtitleSegment(start=0.0, end=10.0, text=long_text)
+
+    # Act
+    split_results = processor._split_segment_by_length(seg)
+
+    # Assert
+    assert len(split_results) > 1
+    for s in split_results:
+        assert len(s.text) <= 25
+        assert s.start < s.end

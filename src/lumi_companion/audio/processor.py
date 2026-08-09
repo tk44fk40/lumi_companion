@@ -7,6 +7,7 @@
 
 import asyncio
 import logging
+import re
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -17,7 +18,9 @@ from lumi_companion.models.audio import SubtitleSegment
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INITIAL_PROMPT: str = "えーっと、そうだな。今日は何をしようかな。とりあえずこれを試してみるか……よし、これでいこう。"
+DEFAULT_INITIAL_PROMPT: str = (
+    "日本語のゲーム実況・雑談配信です。話し言葉や感嘆詞を含めて正確に文字起こしします。"
+)
 
 
 class AudioProcessor:
@@ -37,6 +40,7 @@ class AudioProcessor:
         vad_min_silence_duration_ms: int = 500,
         no_speech_threshold: float = 0.6,
         max_chars_per_second: float = 12.0,
+        max_segment_chars: int = 25,
         post_process_to_hankaku: bool = False,
         post_process_normalize_nums: bool = True,
         post_process_lower: bool = False,
@@ -58,6 +62,7 @@ class AudioProcessor:
             vad_min_silence_duration_ms (int): VAD 最小無音時間(ms)。
             no_speech_threshold (float): 無音判定閾値。
             max_chars_per_second (float): 物理的発話速度の許容上限（文字/秒）。
+            max_segment_chars (int): 1セグメントの許容最大文字数。デフォルト 25。
             post_process_to_hankaku (bool): 全角半角統一等の正規化を行うか。
             post_process_normalize_nums (bool): 数字正規化を行うか。
             post_process_lower (bool): 小文字化を行うか (デフォルト: False)。
@@ -76,6 +81,7 @@ class AudioProcessor:
         self.vad_min_silence_duration_ms = vad_min_silence_duration_ms
         self.no_speech_threshold = no_speech_threshold
         self.max_chars_per_second = max_chars_per_second
+        self.max_segment_chars = max_segment_chars
         self.post_process_to_hankaku = post_process_to_hankaku
         self.post_process_normalize_nums = post_process_normalize_nums
         self.post_process_lower = post_process_lower
@@ -120,6 +126,7 @@ class AudioProcessor:
             list[SubtitleSegment]: フィルタリングおよびクリーン化済みの字幕セグメントリスト。
         """
         results: list[SubtitleSegment] = []
+
         for segment in segments:
             text = getattr(segment, "text", "").strip()
             if not text:
@@ -130,7 +137,7 @@ class AudioProcessor:
             duration = max(end - start, 0.1)
             chars_per_sec = len(text) / duration
 
-            # 1. 無音区間の捏造セグメント判定 (no_speech_prob チェック)
+            # 無音区間の捏造セグメント判定 (no_speech_prob チェック)
             no_speech_prob = getattr(segment, "no_speech_prob", 0.0)
             if no_speech_prob > self.no_speech_threshold:
                 logger.debug(
@@ -140,7 +147,7 @@ class AudioProcessor:
                 )
                 continue
 
-            # 2. 人間の解剖学的限界を超える異常発話速度の捏造判定 (4文字超のみ対象)
+            # 人間の解剖学的限界を超える異常発話速度の捏造判定 (4文字超のみ対象)
             if chars_per_sec > self.max_chars_per_second and len(text) > 4:
                 logger.debug(
                     "異常発話速度の捏造セグメントを自動ドロップ: %s (%.1f文字/秒)",
@@ -154,28 +161,104 @@ class AudioProcessor:
                 end=round(end, 3),
                 text=text,
             )
-            results.append(clean_seg)
+            split_segs = self._split_segment_by_length(clean_seg)
+            for sub_seg in split_segs:
+                results.append(sub_seg)
 
-            if total_duration > 0:
-                progress = min(100.0, (end / total_duration) * 100)
-                logger.info(
-                    "発言検出 [%5.1fs / %5.1fs (%3.0f%%)] [%.2fs -> %.2fs]: %s",
-                    end,
-                    total_duration,
-                    progress,
-                    start,
-                    end,
-                    text,
-                )
-            else:
-                logger.info(
-                    "発言検出 [%.2fs -> %.2fs]: %s",
-                    start,
-                    end,
-                    text,
-                )
+                if total_duration > 0:
+                    progress = min(100.0, (sub_seg.end / total_duration) * 100)
+                    logger.info(
+                        "発言検出 [%5.1fs / %5.1fs (%3.0f%%)] [%.2fs -> %.2fs]: %s",
+                        sub_seg.end,
+                        total_duration,
+                        progress,
+                        sub_seg.start,
+                        sub_seg.end,
+                        sub_seg.text,
+                    )
+                else:
+                    logger.info(
+                        "発言検出 [%.2fs -> %.2fs]: %s",
+                        sub_seg.start,
+                        sub_seg.end,
+                        sub_seg.text,
+                    )
 
         return results
+
+    def _split_segment_by_length(
+        self, segment: SubtitleSegment
+    ) -> list[SubtitleSegment]:
+        """長大字幕セグメントを句読点および指定文字数上限に従って自動分割します。
+
+        Args:
+            segment (SubtitleSegment): 分割対象の字幕セグメント。
+
+        Returns:
+            list[SubtitleSegment]: タイムスタンプ補間済みの分割セグメントリスト。
+        """
+        text = segment.text
+        max_chars = self.max_segment_chars
+
+        if len(text) <= max_chars or max_chars <= 0:
+            return [segment]
+
+        # 句読点・記号（。、！？!?\s）の直後で分割を試みる
+        raw_chunks = [c for c in re.split(r"(?<=[。、！？!?\s])", text) if c]
+
+        sub_texts: list[str] = []
+        current_chunk = ""
+
+        for chunk in raw_chunks:
+            if not current_chunk:
+                current_chunk = chunk
+            elif len(current_chunk) + len(chunk) <= max_chars:
+                current_chunk += chunk
+            else:
+                sub_texts.append(current_chunk)
+                current_chunk = chunk
+        if current_chunk:
+            sub_texts.append(current_chunk)
+
+        # 万が一句読点なしで max_chars を超過しているチャンクを文字数でカット
+        final_texts: list[str] = []
+        for st in sub_texts:
+            if len(st) <= max_chars:
+                final_texts.append(st)
+            else:
+                for i in range(0, len(st), max_chars):
+                    final_texts.append(st[i : i + max_chars])
+
+        total_len = sum(len(t) for t in final_texts)
+        if total_len == 0:
+            return [segment]
+
+        duration = max(segment.end - segment.start, 0.1)
+        result: list[SubtitleSegment] = []
+        current_time = segment.start
+
+        for idx, t in enumerate(final_texts):
+            char_ratio = len(t) / total_len
+            chunk_duration = duration * char_ratio
+            seg_start = current_time
+            seg_end = (
+                current_time + chunk_duration
+                if idx < len(final_texts) - 1
+                else segment.end
+            )
+
+            trimmed_text = t.strip()
+            if trimmed_text:
+                result.append(
+                    SubtitleSegment(
+                        start=round(seg_start, 3),
+                        end=round(seg_end, 3),
+                        text=trimmed_text,
+                    )
+                )
+            current_time = seg_end
+
+        return result if result else [segment]
 
     def process_sync(self, file_path: Path | str) -> list[SubtitleSegment]:
         """同期的にファイル全体の音声を解析・文字起こしを実行します。
