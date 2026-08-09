@@ -80,7 +80,7 @@ YouTube等のライブ配信をリアルタイムで視聴し、配信の流れ�
    - 映像・音声・チャット間で発生する伝送遅延（特にYouTube APIチャットの数秒〜十数秒の遅延）によるタイムスタンプのズレ。
    - **解決策**: 各イベントに受信時/発生時の **共通タイムスタンプ (Unix Timestamp)** を付与し、設定可能な **タイムシフト（`CHAT_TIME_OFFSET`）** とスライディングウィンドウによるアライメント制御を導入。
 6. **LLMプロバイダー（クラウド ⇔ ローカル）のプラガブル切替**
-   - **解決策**: メインのリアクション生成および軽量Vision LLMについて、外部クラウドAPI（`[L-01]` Gemini 1.5 Flash等）とローカル軽量LLMエンジン（`[L-02]` Ollama / llama.cpp）を環境変数等で自由に切替（マルチLLMプロバイダー抽象化）できる構成とした。
+   - **解決策**: メインのリアクション生成および軽量Vision LLMについて、外部クラウドAPI（`[L-01]` Gemini 2.0 Flash等）とローカル軽量LLMエンジン（`[L-02]` Ollama / llama.cpp）を環境変数等で自由に切替（マルチLLMプロバイダー抽象化）できる構成とした。
 
 ### 2.1 堅牢性・効率化のための 9大制御メカニズム
 
@@ -152,7 +152,7 @@ graph TD
     %% --- 下段: LLMエンジン層 ---
     subgraph LLMProviders ["LLM エンジン層 (プラガブル切替可能)"]
         direction TB
-        L01["[L-01] Cloud LLM API Provider (Gemini 1.5 Flash)"]
+        L01["[L-01] Cloud LLM API Provider (Gemini 2.0 Flash)"]
         L02["[L-02] Local LLM Engine Provider (Ollama / llama.cpp)"]
     end
 
@@ -266,7 +266,7 @@ sequenceDiagram
 | **`[P-01]`** | **Parent Application** | 外部システム | **親システム「ゆちゃぽん！」(Yuchapon)**: チャット過去ログ・リアルタイム入力の供給、生成リアクションの受取 |
 
 | **`[P-02]`** | **Telemetry GUI Dashboard** | 外部システム | **定期ポーリング (`GET /v1/telemetry`)** によるシステム状態・LLM利用量のGUI表示 |
-| **`[L-01]`** | **Cloud LLM API Provider** | クラウドAPI | Gemini 1.5 Flash 等の高速マルチモーダルLLM API |
+| **`[L-01]`** | **Cloud LLM API Provider** | クラウドAPI | Gemini 2.0 Flash 等の高速マルチモーダルLLM API |
 | **`[L-02]`** | **Local LLM Engine Provider** | ローカルコンテナ/ホスト | Ollama / llama.cpp 等による超軽量ローカルLLM / Vision LLM 推論エンジン |
 
 ---
@@ -320,10 +320,9 @@ sequenceDiagram
     "last_generated_text": "今のエイムすごすぎる！",
     "generated_at": 1785505008.120,
     "latency_ms": 1850,
-    "provider_used": "[L-01] Cloud LLM API Provider (Gemini 1.5 Flash)"
-  },
-  "llm_usage": {
-    "primary_provider": "[L-01] Gemini 1.5 Flash",
+    "provider_used": "[L-01] Cloud LLM API Provider (Gemini 2.0 Flash)",
+    "timestamp_ms": 1718000000000,
+    "primary_provider": "[L-01] Gemini 2.0 Flash",
     "fallback_provider": "[L-02] Local Ollama (Moondream2 / Qwen2.5)",
     "circuit_breaker_status": "CLOSED (Normal)",
     "total_prompt_tokens": 125000,

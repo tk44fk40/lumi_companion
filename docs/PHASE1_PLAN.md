@@ -91,7 +91,7 @@ sequenceDiagram
     FE->>Out: extracted_frame.jpg 保存
 
     Note over Dev, Out: --- Step 3: Ollama 投入用プロンプト構築 ---
-    Dev->>PB: build_payload(segments, image_base64, model="qwen2-vl:2b", num_ctx=4096)
+    Dev->>PB: build_payload(segments, image_base64, model="qwen3-vl:2b", num_ctx=4096)
     PB->>PB: システムプロンプト + 字幕文脈 + 画像Base64 結合
     PB-->>Dev: payload dict
     PB->>Out: ollama_payload.json 保存
@@ -101,7 +101,7 @@ sequenceDiagram
     OC->>OS: GET /api/tags (モデル存在チェック)
     alt モデルがローカルに存在しない場合
         OS-->>OC: モデル未存在
-        OC->>OS: POST /api/pull {"name": "qwen2-vl:2b"}
+        OC->>OS: POST /api/pull {"name": "qwen3-vl:2b"}
         OS-->>OC: ストリーミングダウンロード完了
     else モデルが存在する場合
         OS-->>OC: モデル存在確認
@@ -145,14 +145,20 @@ uv pip install -r requirements.txt
 
 ---
 
-## 4. RTX 2070 (8GB VRAM) 環境でのテスト用推奨モデル
+## 4. RTX 2070 (8GB VRAM) 環境でのテスト用推奨モデル・プロバイダー
 
-Phase 1 単体デバッグ・テスト用のデフォルトモデルとして **`qwen2-vl:2b`** を採用します。
+Phase 1 単体デバッグ・テストでは、ローカル Ollama モデルおよびクラウド Gemini API の両方をサポートし、柔軟に切替可能です。
 
-- **VRAM消費量**: 約 2.0 ~ 2.5 GB（非常に軽量で高速）
-- **特長**: 高速推論レスポンス、優れた日本語表現力・画面文字（OCR）認識能力。
-- **自動モデルプル**: 対象モデルが Ollama 上に未ダウンロードの場合、プログラムが Ollama API (`POST /api/pull`) 経由で自動取得します。
-- **コンテキスト長**: APIリクエスト時に `options.num_ctx: 4096` を動的指定します。
+### A. ローカル Ollama モデル (`qwen3-vl:2b`)
+- **VRAM消費量**: 約 2.0 ~ 4.0 GB（コンテキスト長や処理画像による）
+- **特長**: 完全ローカル動作、優れた日本語表現力・画面文字（OCR）認識能力。
+- **自動モデルプル**: 対象モデルが Ollama 上に未ダウンロードの場合、プログラムが Ollama API (`POST /api/pull`) 経由で自動取得。
+- **コンテキスト長**: APIリクエスト時に `options.num_ctx: 4096` を動的指定。
+
+### B. クラウド Gemini API (`gemini-2.0-flash`)
+- **VRAM消費量**: 0 GB（ローカル VRAM 非使用。`qwen3-vl:2b` の VRAM 負荷回避策として推奨）
+- **特長**: 超高速・高精度の Vision / テキスト処理能力。
+- **設定方法**: 環境変数 `GEMINI_API_KEY` を設定することで利用可能。
 
 ---
 
@@ -177,18 +183,26 @@ Phase 1 単体デバッグ・テスト用のデフォルトモデルとして **
 - **生成成果物**:
   - `debug_output/extracted_frame.jpg`: 指定秒（例: 10秒目）のリサイズ済み画像（480p相当）
 
-### Step 3: Ollama投入用プロンプトJSONの生成
+### Step 3: LLM投入用プロンプトJSONの生成
 - **実行コマンド**:
   ```bash
-  uv run python scripts/debug_step3_prompt.py --model qwen2-vl:2b --num-ctx 4096
-  ```
-- **生成成果物**:
-  - `debug_output/ollama_payload.json`: 発言コンテキスト＋画像Base64＋プロンプト＋`options.num_ctx` を含むOllama API互換ペイロード
+  # Ollama (qwen3-vl:2b) 用
+  uv run python scripts/debug_step3_prompt.py --model qwen3-vl:2b --num-ctx 4096
 
-### Step 4: ローカルOllamaリクエスト ＆ 応答確認
-- **実行コマンド**:
-  ```bash
-  uv run python scripts/debug_step4_ollama.py --model qwen2-vl:2b
+  # Gemini API (gemini-2.0-flash) 用
+  uv run python scripts/debug_step3_prompt.py --provider gemini --model gemini-2.0-flash
   ```
 - **生成成果物**:
-  - `debug_output/ollama_response.json`: Ollama から返却されたAIコメント・リアクション応答JSON
+  - `debug_output/ollama_payload.json` (または `llm_payload.json`): 発言コンテキスト＋画像Base64＋プロンプト＋設定パラメータを含むLLM API互換ペイロード
+
+### Step 4: LLMリクエスト ＆ 応答確認
+- **実行コマンド**:
+  ```bash
+  # Ollama (qwen3-vl:2b)
+  uv run python scripts/debug_step4_ollama.py --model qwen3-vl:2b
+
+  # Gemini API (gemini-2.0-flash)
+  uv run python scripts/debug_step4_ollama.py --provider gemini --model gemini-2.0-flash
+  ```
+- **生成成果物**:
+  - `debug_output/ollama_response.json`: LLM から返却されたAIコメント・リアクション応答JSON
