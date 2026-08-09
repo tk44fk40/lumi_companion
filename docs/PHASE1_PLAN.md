@@ -132,7 +132,7 @@ sequenceDiagram
 ### 事前インストール推奨デバッグツール (`uv tool install`)
 プロジェクト仮想環境とは独立して、以下の開発用 CLI ツールを事前にインストールしておくことを推奨します。
 ```bash
-uv tool install pyright
+uv tool install basedpyright
 uv tool install ruff
 uv tool install httpie
 uv tool install rich-cli
