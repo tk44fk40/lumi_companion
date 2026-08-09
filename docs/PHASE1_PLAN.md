@@ -129,14 +129,10 @@ sequenceDiagram
 - **Python 3.12**（`.python-version` により指定）
 - `faster-whisper` (CTranslate2), `torch`, `onnxruntime`, `opencv-python` 等の C拡張パッケージのビルド済みホイールが最も安定して動作します。
 
-### 事前インストール推奨デバッグツール (`uv tool install`)
-プロジェクト仮想環境とは独立して、以下の開発用 CLI ツールを事前にインストールしておくことを推奨します。
+### 開発用依存パッケージ (`uv add --dev`)
+型チェックツールやフォーマッター等の開発用ツールは、プロジェクトの開発依存関係 (`dev`) として管理します。
 ```bash
-uv tool install basedpyright
-uv tool install ruff
-uv tool install httpie
-uv tool install rich-cli
-uv tool install py-spy
+uv add --dev basedpyright ruff pytest-cov pre-commit
 ```
 
 ### プロジェクト依存パッケージの同期
