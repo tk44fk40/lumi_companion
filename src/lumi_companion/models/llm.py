@@ -39,6 +39,11 @@ class OllamaResponse:
         """
         message = data.get("message", {})
         content = message.get("content", "") if isinstance(message, dict) else ""
+        content = content.strip()
+
+        # フォールバック処理（空文字や「?」のみの場合）
+        if not content or content == "?":
+            content = "……"
 
         return cls(
             model=str(data.get("model", "")),

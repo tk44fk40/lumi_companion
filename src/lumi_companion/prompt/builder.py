@@ -19,11 +19,14 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT_RUMIPON = """あなたはライブ配信をリアルタイムで一緒に視聴しているAIパートナー「るみぽん！」(Lumi)です。
 
 【あなたの役割・キャラクター】
-- 配信画面の状況（ゲーム画面やカメラ映像）と配信者の発言を聞いて、自然な一視聴者としてリアクションやコメントを返します。
-- 明るく親しみやすい口調（「〜だよ！」「〜だね！」「おおっ！」など）で応答します。
-- 長文の解説ではなく、チャットに流れるような短文（1〜2文程度、50文字以内）でレスポンスしてください。
-- 画面と発言の文脈に合わせたリアクションを心がけてください。
-- 内部的な推論や思考プロセスは極力短く簡潔に行い、過度な深読みや長考は避けてください。すぐに結論を導き出し、速やかに回答を出力してください。
+- あなたは配信者（ストリーマー）ではなく、配信を見ているリスナー（一視聴者）です。
+- 配信者のプレイや発言に対して、チャット欄から明るく親しみやすい口調（「〜だよ！」「〜だね！」「おおっ！」など）で共感・応援コメントを返します。
+
+【禁止事項・厳格な出力制約】
+- 配信者のような発言（「ご視聴ありがとうございました」「配信終了です」等）や、AIアシスタントのような案内（「何かあれば教えてください」等）は絶対にしないでください。
+- ハッシュタグ（#〜）やSNS風のメタ情報は出力に含めないでください。
+- 出力はチャットへのコメント本文のみ（30文字前後）とし、解説や前置きは含めないでください。
+- 内部的な推論や思考プロセスは極力短く簡潔に行い、すぐに結論を出力してください。
 """
 
 
@@ -34,19 +37,23 @@ class PromptBuilder:
     def format_subtitles_text(
         cls,
         segments: Sequence[SubtitleSegment],
-        max_chars: int = 2000,
+        max_chars: int | None = None,
     ) -> str:
         """字幕セグメントリストをタイムスタンプ付きのテキスト文章に整形します。
 
         Args:
             segments (Sequence[SubtitleSegment]): 発言字幕セグメントのシーケンス。
-            max_chars (int, optional): プロンプトに含める最大文字数。デフォルト 2000。
+            max_chars (int | None, optional): プロンプトに含める最大文字数。未指定時は設定値を使用。
 
         Returns:
             str: タイムスタンプ付きで整形された字幕テキスト。
         """
         if not segments:
             return "(直近の発言はありません)"
+
+        limit_chars = (
+            max_chars if max_chars is not None else settings.prompt_max_subtitle_chars
+        )
 
         lines: list[str] = []
         current_chars = 0
@@ -58,7 +65,7 @@ class PromptBuilder:
             # 改行文字分を加味（最初の要素以外は +1 文字）
             line_len = len(line) + (1 if lines else 0)
 
-            if lines and current_chars + line_len > max_chars:
+            if lines and current_chars + line_len > limit_chars:
                 break
 
             lines.append(line)
@@ -74,7 +81,7 @@ class PromptBuilder:
         user_prompt: str | None = None,
         model: str | None = None,
         num_ctx: int | None = None,
-        temperature: float = 0.7,
+        temperature: float | None = None,
         stream: bool = False,
     ) -> dict[str, Any]:
         """Ollama API (/api/chat) 送信用の JSON ペイロード辞書を構築します。
@@ -85,7 +92,7 @@ class PromptBuilder:
             user_prompt (str | None, optional): カスタムユーザー指示テキスト。
             model (str | None, optional): 対象モデル名。
             num_ctx (int | None, optional): コンテキストウィンドウ長。
-            temperature (float, optional): 推論サンプリング温度。デフォルト 0.7。
+            temperature (float | None, optional): 推論サンプリング温度。未指定時は設定値を使用。
             stream (bool, optional): ストリーミングレスポンスフラグ。デフォルト False。
 
         Returns:
@@ -93,6 +100,9 @@ class PromptBuilder:
         """
         target_model = model or settings.ollama_model
         target_num_ctx = num_ctx or settings.ollama_num_ctx
+        target_temp = (
+            temperature if temperature is not None else settings.ollama_temperature
+        )
 
         subtitles_str = cls.format_subtitles_text(subtitles or [])
         prompt_text = (
@@ -101,7 +111,8 @@ class PromptBuilder:
         )
 
         user_content = (
-            f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{prompt_text}"
+            f"【直近の配信者発言】\n{subtitles_str}\n\n【指示】\n{prompt_text}\n\n"
+            "※注意：ハッシュタグ(#)や配信者風の挨拶は禁止。配信を観ているリスナーとして短くコメントしてください。"
         )
 
         message_content: dict[str, Any] = {
@@ -123,7 +134,8 @@ class PromptBuilder:
             ],
             "options": {
                 "num_ctx": target_num_ctx,
-                "temperature": temperature,
+                "num_predict": settings.ollama_num_predict,
+                "temperature": target_temp,
             },
             "stream": stream,
         }

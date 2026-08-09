@@ -75,6 +75,9 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "thatdamai/qwen3-vl:2b"
     ollama_num_ctx: int = 8192
+    ollama_num_predict: int = 40
+    ollama_temperature: float = 0.4
+    prompt_max_subtitle_chars: int = 500
 
     # Whisper / 音声設定
     whisper_model_size: str = "large-v3-turbo"  # small, medium, large-v3-turbo 等
