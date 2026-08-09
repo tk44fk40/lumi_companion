@@ -4,28 +4,49 @@
 
 ---
 
-## 1. 音声認識パラメータとチューニングガイド
+## 1. 環境変数パラメータとチューニングガイド
 
 優先順位: **OS環境変数 > `.env` ファイル > `config.py` デフォルト値**
 
+### 1.1. 音声認識 (Whisper / VAD) ＆ テキスト後処理パラメータ
+
 | 設定キー | デフォルト推奨値 | 役割とチューニング指針 |
 | :--- | :--- | :--- |
-| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | 独り言やボソボソ声の認識率が最も高いモデル。VRAM制限時は `medium` を選択。 |
+| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | 独り言やボソボソ声の認識率が最も高いモデル。VRAM制限時は `medium` や `small` を選択。 |
 | `WHISPER_DEVICE` | `auto` | `cuda` (GPU) または `cpu` を自動選択。 |
-| `WHISPER_COMPUTE_TYPE` | `default` | GPU時は `float16`、メモリ削減時は `int8` を指定。 |
+| `WHISPER_COMPUTE_TYPE` | `float16` | GPU時は `float16`、メモリ削減・CPU動作時は `int8` 等を指定。 |
 | `WHISPER_LANGUAGE` | `ja` | 認識言語コード（日本語固定）。 |
-| `WHISPER_BEAM_SIZE` | `5` | 探索ビーム幅。精度重視時は `8` 等に引き上げ。 |
-| `WHISPER_INITIAL_PROMPT` | `"えーっと、そうだな。..."` | 自然な日本語独り言実例文を設定し、モデルの出力文体を誘導。 |
+| `WHISPER_BEAM_SIZE` | `3` (推奨 3〜5) | 探索ビーム幅。精度重視時は `5`〜`8` に引き上げ。 |
+| `WHISPER_INITIAL_PROMPT` | `"日本語のゲーム実況..."` | 自然な日本語独り言実例文やスタイル指示を設定し、モデルの文体を誘導。 |
 | `WHISPER_CONDITION_ON_PREVIOUS_TEXT` | `False` | 直前文脈への依存を切り、小さな声での同一語句連続ループ（ハルシネーション）を防止。 |
 | `WHISPER_VAD_FILTER` | `True` | Silero VAD による無音区間フィルタリング。 |
-| `WHISPER_VAD_THRESHOLD` | `0.35` | 音声検出閾値（標準0.5）。値を下げる（0.30〜0.35）ことで小さな独り言の切り落としを防ぐ。 |
-| `WHISPER_VAD_MIN_SILENCE_DURATION_MS` | `500` | 発話区間とみなす最小無音時間(ms)。 |
-| `WHISPER_NO_SPEECH_THRESHOLD` | `0.6` | 無音判定閾値。 |
+| `WHISPER_VAD_THRESHOLD` | `0.15` (推奨 0.15〜0.35) | 音声検出閾値（標準0.5）。値を下げることで小さな独り言の切り落としを防ぐ。 |
+| `WHISPER_VAD_MIN_SILENCE_DURATION_MS` | `200` (推奨 200〜500) | 発話区間とみなす最小無音時間(ms)。 |
+| `WHISPER_NO_SPEECH_THRESHOLD` | `0.95` (推奨 0.6〜0.95) | 無音判定閾値。高い値ほど無音部分への幻覚文字捏造を軽減。 |
+| `WHISPER_MAX_SEGMENT_CHARS` | `35` (デフォルト 25) | 長大セグメントの文字数による自動分割閾値（0 で機能OFF）。 |
 | `WHISPER_POST_PROCESS_TO_HANKAKU` | `False` | 後処理における全角英数記号の半角化 (NFKC) の有効化。 |
 | `WHISPER_POST_PROCESS_NORMALIZE_NUMS` | `True` | 後処理における数字正規化（半角・漢数字・ローマ数字 ➔ 全角数字）の有効化。 |
 | `WHISPER_POST_PROCESS_LOWER` | `False` | 後処理における英小文字化の有効化。 |
 | `WHISPER_POST_PROCESS_REMOVE_PUNCT` | `False` | 後処理における句読点・記号・余白クリーン化の有効化（CER評価等の特殊用途向け）。 |
-| `CUSTOM_DICTIONARY_PATH` | `"data/custom_dictionary.yaml"` | 置換辞書ファイルのパス。 |
+
+### 1.2. Ollama / LLM 設定パラメータ
+
+| 設定キー | デフォルト推奨値 | 役割とチューニング指針 |
+| :--- | :--- | :--- |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama サーバーのホストURL。 |
+| `OLLAMA_MODEL` | `qwen2.5vl:3b` | 使用する視覚対応モデル（`qwen2.5vl:3b`, `thatdamai/qwen3-vl:2b`, `llava` 等）。 |
+| `OLLAMA_NUM_CTX` | `8192` | LLMのコンテキストウィンドウサイズ（画像＋字幕プロンプトを収める十分な領域）。 |
+| `OLLAMA_NUM_PREDICT` | `40` | 推論時の最大出力トークン数。リアクションの短文応答化と暴走防止。 |
+| `OLLAMA_TEMPERATURE` | `0.4` | サンプリング温度。低いほど安定した応答、高いほど多様な表現。 |
+| `PROMPT_MAX_SUBTITLE_CHARS` | `500` | プロンプトに含める直近字幕履歴の最大文字数（ノイズ軽減制御）。 |
+
+### 1.3. システムパス・環境設定
+
+| 設定キー | デフォルト推奨値 | 役割とチューニング指針 |
+| :--- | :--- | :--- |
+| `DEFAULT_VIDEO_PATH` | `data/test_videos/sample.mp4` | テスト・デバッグ実行時のデフォルト入力動画ファイルパス。 |
+| `DEBUG_OUTPUT_DIR` | `debug_output` | 字幕JSON/SRTやデバッグ用画像ログの出力先ディレクトリ。 |
+| `CUSTOM_DICTIONARY_PATH` | `data/custom_dictionary.yaml` | 固有表現・表記揺れを正規化するための後処理置換辞書ファイルパス。 |
 
 ### ユースケース別チューニング例
 - **ケース1: 独り言や声が小さく語頭・語尾が切れる場合**

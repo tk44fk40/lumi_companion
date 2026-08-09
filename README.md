@@ -85,7 +85,7 @@ graph TD
 ### 前提条件
 * Linux (Podman / Distrobox) または Windows (Docker Desktop / WSL2)
 * NVIDIA GPU (RTX 2070 8GB VRAM 以上推奨)
-* Gemini API Key
+* Ollama (視覚LLMモデル: `qwen2.5vl:3b` 等)
 
 ### 起動手順
 
@@ -94,8 +94,8 @@ graph TD
 git clone https://github.com/tk44fk40/lumi_companion.git
 cd lumi_companion
 
-# 環境変数の設定
-export GEMINI_API_KEY="your_api_key_here"
+# 環境変数テンプレートから .env を作成・編集
+cp .env.example .env
 
 # コンテナの起動 (Podman or Docker)
 podman-compose up -d
@@ -107,9 +107,10 @@ docker compose up -d
 
 ## 📖 ドキュメント (Documentation)
 
-詳細なアーキテクチャ設計・インターフェース仕様・データフロー・Phase 1 開発計画については以下をご参照ください。
+詳細なアーキテクチャ設計・環境変数パラメータ・データフロー・Phase 1 開発計画については以下をご参照ください。
 
 * 📄 [システム詳細設計書](./docs/DESIGN_SPEC.md)
+* 📄 [環境変数パラメータ設定・音声精度チューニングガイド](./docs/AUDIO_ACCURACY_TUNING_GUIDE.md)
 * 📄 [Phase 1 開発計画・デバッグ手順書](./docs/PHASE1_PLAN.md)
 
 

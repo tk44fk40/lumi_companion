@@ -1,6 +1,6 @@
 # Phase 1 開発計画 ＆ デバッグ手順書 (Phase 1 Development & Debugging Guide)
 
-本ドキュメントは、「るみぽん！」(Lumi Companion) の Phase 1 初期構築における開発環境セットアップ、技術仕様、コンポーネント構成、シーケンス図、および Step 1 〜 Step 4 の段階的デバッグ実行手順を記載した開発者ガイドです。
+本ドキュメントは、「るみぽん！」(Lumi Companion) の Phase 1 初期構築における開発環境セットアップ、技術仕様、コンポーネント構成、シーケンス図、および Step 1 〜 Step 5 の段階的デバッグ実行手順を記載した開発者ガイドです。
 
 ---
 
@@ -110,6 +110,18 @@ sequenceDiagram
     OS-->>OC: 200 OK (AIリアクション応答)
     OC-->>Dev: Response dict
     OC->>Out: ollama_response.json 保存
+
+    Note over Dev, Out: --- Step 5: タイムライン連動連続推論 ＆ デバッグ ---
+    Dev->>AP: process_async("sample.mp4") 動画全体の文字起こし
+    Dev->>Dev: 指定間隔（例: 3分）ごとのタイムスタンプ生成
+    loop 各タイムスタンプ (ts) ごと
+        Dev->>AP: ts 以前の発言字幕をフィルタ抽出
+        Dev->>FE: extract_frame_base64("sample.mp4", timestamp=ts)
+        Dev->>PB: build_payload(subtitles, frame_base64, model)
+        Dev->>OC: generate_reaction(payload)
+        OC-->>Dev: Response dict
+        Dev->>Out: debug_output/timeline/{ts}s_subtitles, frame, payload, response 保存
+    end
 ```
 
 ---
@@ -162,7 +174,7 @@ Phase 1 単体デバッグ・テストでは、ローカル Ollama モデルお�
 
 ---
 
-## 5. Step 1 〜 Step 4 段階的デバッグ実行手順
+## 5. Step 1 〜 Step 5 段階的デバッグ実行手順
 
 成果物はすべて `debug_output/` 配下に出力・保存されます。
 
@@ -206,3 +218,16 @@ Phase 1 単体デバッグ・テストでは、ローカル Ollama モデルお�
   ```
 - **生成成果物**:
   - `debug_output/ollama_response.json`: LLM から返却されたAIコメント・リアクション応答JSON
+
+### Step 5: タイムライン検証デバッグ（時系列連続推論シミュレーション）
+動画全体の音声認識結果をもとに、一定間隔（デフォルト: 180秒＝3分ごと）および動画末尾のタイムスタンプにおける「その時点までの発言文脈」と「その時点の画面フレーム」を抽出し、連続で LLM に推論リクエストを送信することで、配信の流れに応じた応答の変化を総合検証します。
+
+- **実行コマンド**:
+  ```bash
+  uv run python scripts/debug_step5_timeline.py --video sample.mp4 --interval 180
+  ```
+- **生成成果物** (`debug_output/timeline/`):
+  - `debug_output/timeline/{timestamp}s_subtitles.json`: そのタイムスタンプまでに抽出された発言文脈リスト
+  - `debug_output/timeline/{timestamp}s_frame.jpg`: そのタイムスタンプ時点のリサイズ済み画像
+  - `debug_output/timeline/{timestamp}s_payload.json`: LLM への投入ペイロード JSON
+  - `debug_output/timeline/{timestamp}s_response.json`: LLM からの AI リアクション応答生データ JSON
