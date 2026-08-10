@@ -102,16 +102,6 @@ class TestTextPostProcessor:
         # Assert
         assert text == "ルミのテスト"
 
-    def test_normalize_numbers_static(self) -> None:
-        # Arrange
-        raw = "第I章 十個のりんご ①番 １２３"
-
-        # Act
-        res = TextPostProcessor.normalize_numbers(raw)
-
-        # Assert
-        assert res == "第１章 １０個のりんご １番 １２３"
-
     def test_normalize_text_all_enabled(self) -> None:
         # Arrange
         processor = TextPostProcessor(

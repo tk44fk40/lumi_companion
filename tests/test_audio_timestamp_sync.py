@@ -2,14 +2,15 @@
 
 from types import SimpleNamespace
 
-from lumi_companion.audio.processor import AudioProcessor
+from lumi_companion.audio.segment_sanitizer import SegmentSanitizer
+from lumi_companion.audio.segment_splitter import SegmentSplitter
 from lumi_companion.models.audio import SubtitleSegment
 
 
 def test_sanitize_segments_aligns_start_time_with_first_word() -> None:
     """チャンク開始時刻が 0.0s であっても文頭単語 words[0].start (3.12s) に補正されることを検証します (AAAパターン)。"""
     # Arrange
-    processor = AudioProcessor(word_timestamps=True)
+    sanitizer = SegmentSanitizer()
     mock_word1 = SimpleNamespace(word="おはよう", start=3.12, end=4.0)
     mock_word2 = SimpleNamespace(word="ございます。", start=4.0, end=5.0)
 
@@ -22,7 +23,7 @@ def test_sanitize_segments_aligns_start_time_with_first_word() -> None:
     )
 
     # Act
-    results = processor._sanitize_segments([mock_segment])
+    results = sanitizer.sanitize_segments([mock_segment])
 
     # Assert
     assert len(results) >= 1
@@ -33,10 +34,7 @@ def test_sanitize_segments_aligns_start_time_with_first_word() -> None:
 def test_process_sync_applies_dictionary_before_splitting() -> None:
     """置換辞書が字幕分割の前に適用され、置換後文字数に基づいて分割されることを検証します (AAAパターン)。"""
     # Arrange
-    processor = AudioProcessor(
-        max_segment_chars=25,
-        word_timestamps=True,
-    )
+    sanitizer = SegmentSanitizer()
 
     mock_segment = SimpleNamespace(
         text="ウェーパーのテストです。",
@@ -50,7 +48,7 @@ def test_process_sync_applies_dictionary_before_splitting() -> None:
     )
 
     # Act
-    results = processor._sanitize_segments([mock_segment])
+    results = sanitizer.sanitize_segments([mock_segment])
 
     # Assert
     assert len(results) >= 1
@@ -59,10 +57,7 @@ def test_process_sync_applies_dictionary_before_splitting() -> None:
 def test_split_segment_preserves_timestamps_for_replaced_phrase() -> None:
     """フレーズまるごと全置換された場合でも全体の開始・終了タイムコード(3.12s ~ 8.0s)が維持されることを検証します (AAAパターン)。"""
     # Arrange
-    processor = AudioProcessor(
-        max_segment_chars=20,
-        word_timestamps=True,
-    )
+    splitter = SegmentSplitter(max_segment_chars=20)
     orig_segment = SubtitleSegment(
         start=3.12,
         end=8.0,
@@ -70,7 +65,7 @@ def test_split_segment_preserves_timestamps_for_replaced_phrase() -> None:
     )
 
     # Act
-    results = processor._split_segment_intelligently(orig_segment)
+    results = splitter.split_segment_intelligently(orig_segment)
 
     # Assert
     assert len(results) >= 1
