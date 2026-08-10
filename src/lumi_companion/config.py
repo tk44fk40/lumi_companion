@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     whisper_vad_min_silence_duration_ms: int = 500
     whisper_no_speech_threshold: float = 0.6
     whisper_max_segment_chars: int = 25
+    whisper_word_timestamps: bool = True
 
     # デフォルトの入出力パス
     default_video_path: Path = Path("data/test_videos/sample.mp4")

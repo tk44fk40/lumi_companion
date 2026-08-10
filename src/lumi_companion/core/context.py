@@ -22,6 +22,14 @@ class AppContext:
     ollama_model: str = field(default_factory=lambda: settings.ollama_model)
     ollama_num_ctx: int = field(default_factory=lambda: settings.ollama_num_ctx)
 
+    # Whisper / 音声設定
+    whisper_max_segment_chars: int = field(
+        default_factory=lambda: settings.whisper_max_segment_chars
+    )
+    whisper_word_timestamps: bool = field(
+        default_factory=lambda: settings.whisper_word_timestamps
+    )
+
     # 画像処理定数 (480p / 480px高さアスペクト比維持)
     max_image_height_px: int = 480
     jpeg_quality: int = 85

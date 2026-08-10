@@ -47,6 +47,7 @@ class AudioProcessorService:
                 vad_min_silence_duration_ms=settings.whisper_vad_min_silence_duration_ms,
                 no_speech_threshold=settings.whisper_no_speech_threshold,
                 max_segment_chars=settings.whisper_max_segment_chars,
+                word_timestamps=settings.whisper_word_timestamps,
                 post_process_to_hankaku=settings.whisper_post_process_to_hankaku,
                 post_process_normalize_nums=settings.whisper_post_process_normalize_nums,
                 post_process_lower=settings.whisper_post_process_lower,
