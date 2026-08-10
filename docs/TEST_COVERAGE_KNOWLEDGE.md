@@ -25,7 +25,7 @@
 | モジュール (`src/lumi_companion/`) | カバレッジ | テスト状況・網羅詳細 |
 | :--- | :---: | :--- |
 | **`audio/post_processor.py`** | **100%** | 正規化 (NFKC/数字/小文字/句読点)、YAML/JSON 辞書置換、セグメント適用を全網羅 |
-| **`audio/processor.py`** | **100%** | sanitize_segments、発話速度判定、TextPostProcessor 連携を全網羅 |
+| **`audio/processor.py`** | **95%** | sanitize_segments、インテリジェント字幕分割、発話速度判定、TextPostProcessor 連携を網羅 |
 | **`audio/srt_exporter.py`** | **100%** | SRT / WebVTT / JSON 保存、拡張子自動判定、表記揺れ、例外処理を全網羅 |
 | **`prompt/builder.py`** | **100%** | システムプロンプト、字幕文章化、画像添付、JSON保存を全網羅 |
 | **`llm/ollama.py`** | **100%** | モデル確認、ストリーミングプル進捗/エラー/完了、推論送信、全例外ハンドリングを網羅 |
@@ -45,6 +45,12 @@
 - **技術的根拠**:
   - `_find_cuda_libraries()` 内で、システムに NVIDIA GPU/CUDA ツールキットが存在する場合と存在しない場合で分岐する。
   - テスト実行環境が CPU/非GPU 環境の場合、CUDA 探索パスの環境変数追加ブロックは通過しないため未カバーとなる。これは環境依存の正常な設計挙動である。
+
+#### 音声解析モジュール (`src/lumi_companion/audio/processor.py`)
+- **未カバー行**: L125-127, 134-136, 141, 278, 386, 398, 416 (計 11 行)
+- **技術的根拠**:
+  - `janome` の `ImportError` 時のフォールバック分岐 (`_split_segment_fallback` の呼び出し等) は、`janome` が必須パッケージとしてインストールされている通常の実行・テスト環境では通過しない。
+  - `_get_word_time` における dict 型入力の判定分岐は、将来的な別APIからの入力（JSON互換フォーマット等）を想定した防御的コードであり、Faster-Whisperオブジェクトのみを扱う現在のテストスコープからは外れるため許容する。
 
 ---
 
