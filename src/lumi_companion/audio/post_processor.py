@@ -257,8 +257,12 @@ class TextPostProcessor:
         for seg in segments:
             new_text = self.apply_to_text(seg.text)
             if new_text:
-                normalized_segments.append(
-                    SubtitleSegment(start=seg.start, end=seg.end, text=new_text)
+                new_seg = SubtitleSegment(
+                    start=seg.start,
+                    end=seg.end,
+                    text=new_text,
                 )
+                # words の引き継ぎロジックは削除しました
+                normalized_segments.append(new_seg)
 
         return normalized_segments
