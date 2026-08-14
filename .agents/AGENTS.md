@@ -45,7 +45,10 @@
 - 中間出力 (字幕JSON/SRT, 画像等) は `debug_output/` へ出力。コンポーネント単体でデバッグ可能スクリプト化。
 
 ## 11. AIコード生成 & セルフチェック規範
-コード作成・修正における自律ワークフロー（Issue作成、シグネチャ優先提示、TDDテスト先行作成、セルフチェック観点、エビデンスログ提示等）の具体的な手順については、[autonomous-code-workflow](file:///home/tk44/ghq/github.com/tk44fk40/lumi_companion/.agents/skills/autonomous-code-workflow/SKILL.md) スキルに完全準拠して実施すること。
+コード作成・修正における自律ワークフロー（Issue作成、シグネチャ優先提示、TDDテスト先行作成、
+セルフチェック観点、エビデンスログ提示等）の具体的な手順については、
+[autonomous-code-workflow](file:///home/tk44/ghq/github.com/tk44fk40/lumi_companion/.agents/skills/autonomous-code-workflow/SKILL.md)
+スキルに完全準拠し、サブエージェントを利用して実施すること。
 
 ## 12. テストコード (`tests/`) 規範
 - **構造化**: モジュール単位で `tests/test_*.py` に分割。共通化は `conftest.py` を活用。

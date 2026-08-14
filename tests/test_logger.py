@@ -44,16 +44,8 @@ def test_logger_get_logger_auto_flush_false(tmp_path: Path) -> None:
     logger = LumiLogger.get_logger("test_buffered", context, auto_flush=False)
 
     # FlushStreamHandler / FlushFileHandler ではなく、純粋な StreamHandler / FileHandler であることをチェック
-    stream_handlers = [
-        h
-        for h in logger.handlers
-        if type(h) is logging.StreamHandler  # noqa: E721
-    ]
-    file_handlers = [
-        h
-        for h in logger.handlers
-        if type(h) is logging.FileHandler  # noqa: E721
-    ]
+    stream_handlers = [h for h in logger.handlers if type(h) is logging.StreamHandler]
+    file_handlers = [h for h in logger.handlers if type(h) is logging.FileHandler]
     assert len(stream_handlers) == 1
     assert len(file_handlers) == 1
 

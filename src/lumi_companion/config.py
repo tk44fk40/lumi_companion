@@ -27,7 +27,7 @@ def setup_cuda_libraries() -> bool:
         dirs: list[str] = []
         for mod in (nvidia.cublas.lib, nvidia.cudnn.lib):
             if hasattr(mod, "__path__") and mod.__path__:
-                dirs.append(str(list(mod.__path__)[0]))
+                dirs.append(str(next(iter(mod.__path__))))
             elif getattr(mod, "__file__", None):
                 dirs.append(os.path.dirname(str(mod.__file__)))
 
