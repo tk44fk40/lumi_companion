@@ -29,6 +29,13 @@ class AppContext:
     whisper_word_timestamps: bool = field(
         default_factory=lambda: settings.whisper_word_timestamps
     )
+    subtitle_end_padding: float = field(
+        default_factory=lambda: settings.subtitle_end_padding
+    )
+    subtitle_min_duration: float = field(
+        default_factory=lambda: settings.subtitle_min_duration
+    )
+    subtitle_min_gap: float = field(default_factory=lambda: settings.subtitle_min_gap)
 
     # 画像処理定数 (480p / 480px高さアスペクト比維持)
     max_image_height_px: int = 480

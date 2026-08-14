@@ -101,3 +101,33 @@ async def test_audio_processor_process_async(
         # Assert
         assert len(results) == 1
         assert results[0].text == "非同期テスト音声"
+
+
+@patch("lumi_companion.audio.processor.WhisperModel")
+def test_audio_processor_with_timing_adjuster(
+    mock_whisper_model_class: MagicMock,
+) -> None:
+    """AudioProcessor に timing_adjuster が渡された場合に adjust_segments が呼び出されることを検証します。"""
+    # Arrange
+    mock_model_instance = MagicMock()
+    mock_whisper_model_class.return_value = mock_model_instance
+    mock_model_instance.transcribe.return_value = (
+        [SimpleNamespace(start=0.0, end=1.0, text="テスト発話", no_speech_prob=0.1)],
+        SimpleNamespace(duration=5.0, language="ja"),
+    )
+
+    mock_adjuster = MagicMock()
+    mock_adjuster.adjust_segments.return_value = [
+        SimpleNamespace(start=0.0, end=1.8, text="テスト発話")
+    ]
+
+    processor = AudioProcessor(timing_adjuster=mock_adjuster)
+
+    with patch("pathlib.Path.exists", return_value=True):
+        # Act
+        results = processor.process_sync("dummy.mp4")
+
+        # Assert
+        assert len(results) == 1
+        assert results[0].end == 1.8
+        mock_adjuster.adjust_segments.assert_called_once()

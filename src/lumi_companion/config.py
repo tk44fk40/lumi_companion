@@ -105,6 +105,11 @@ class Settings(BaseSettings):
     whisper_post_process_lower: bool = False
     whisper_post_process_remove_punct: bool = False
 
+    # 字幕表示タイミング調整設定
+    subtitle_end_padding: float = 0.8
+    subtitle_min_duration: float = 1.2
+    subtitle_min_gap: float = 0.05
+
     @model_validator(mode="after")
     def _validate_whisper_device(self) -> Self:
         """whisper_device が 'auto' の場合のデバイス設定バリデーション。

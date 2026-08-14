@@ -8,6 +8,7 @@ import asyncio
 from pathlib import Path
 
 from lumi_companion.audio.processor import AudioProcessor
+from lumi_companion.audio.timing_adjuster import SubtitleTimingAdjuster
 from lumi_companion.config import settings
 from lumi_companion.core.context import AppContext
 from lumi_companion.core.logger import LumiLogger
@@ -34,6 +35,11 @@ class AudioProcessorService:
         if processor is not None:
             self.processor = processor
         else:
+            timing_adjuster = SubtitleTimingAdjuster(
+                end_padding=self.context.subtitle_end_padding,
+                min_duration=self.context.subtitle_min_duration,
+                min_gap=self.context.subtitle_min_gap,
+            )
             self.processor = AudioProcessor(
                 model_size=settings.whisper_model_size,
                 device=settings.whisper_device,
@@ -53,6 +59,7 @@ class AudioProcessorService:
                 post_process_lower=settings.whisper_post_process_lower,
                 post_process_remove_punct=settings.whisper_post_process_remove_punct,
                 custom_dictionary_path=settings.custom_dictionary_path,
+                timing_adjuster=timing_adjuster,
             )
 
     def process_audio_sync(self, video_path: Path | str) -> AudioProcessResult:

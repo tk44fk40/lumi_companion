@@ -14,6 +14,7 @@ from faster_whisper import WhisperModel
 from lumi_companion.audio.post_processor import TextPostProcessor
 from lumi_companion.audio.segment_sanitizer import SegmentSanitizer
 from lumi_companion.audio.segment_splitter import SegmentSplitter
+from lumi_companion.audio.timing_adjuster import TimingAdjusterProtocol
 from lumi_companion.models.audio import SubtitleSegment
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class AudioProcessor:
         post_process_remove_punct: bool = False,
         custom_dictionary_path: Path | None = None,
         word_timestamps: bool = True,
+        timing_adjuster: TimingAdjusterProtocol | None = None,
     ) -> None:
         """AudioProcessor を初期化します。
 
@@ -70,6 +72,7 @@ class AudioProcessor:
             post_process_remove_punct (bool): 句読点・記号の除去を行うか。
             custom_dictionary_path (Path | None): 後処理置換辞書ファイルのパス。
             word_timestamps (bool): 単語レベルタイムスタンプを有効化し発声開始位置を自動補正するか。
+            timing_adjuster (TimingAdjusterProtocol | None): 字幕表示タイミング補正処理 (DI)。
         """
         self.model_size = model_size
         self.device = device
@@ -90,6 +93,7 @@ class AudioProcessor:
         self.post_process_remove_punct = post_process_remove_punct
         self.custom_dictionary_path = custom_dictionary_path
         self.word_timestamps = word_timestamps
+        self.timing_adjuster = timing_adjuster
         self._model: WhisperModel | None = None
 
     def _get_model(self) -> WhisperModel:
@@ -175,9 +179,17 @@ class AudioProcessor:
 
         # 3. 文節境界でのインテリジェント分割
         splitter = SegmentSplitter(max_segment_chars=self.max_segment_chars)
-        final_segments: list[SubtitleSegment] = []
+        split_segments: list[SubtitleSegment] = []
         for seg in normalized_segments:
-            final_segments.extend(splitter.split_segment_intelligently(seg))
+            split_segments.extend(splitter.split_segment_intelligently(seg))
+
+        # 4. 字幕表示タイミングの補正 (余韻パディング・最小表示時間・重複防止)
+        if self.timing_adjuster is not None:
+            final_segments = self.timing_adjuster.adjust_segments(
+                split_segments, total_duration=total_duration
+            )
+        else:
+            final_segments = split_segments
 
         logger.info("発言抽出完了 (%d 件のセグメントを検出)", len(final_segments))
         return final_segments
